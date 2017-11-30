@@ -3,6 +3,1115 @@
   
     
     <entry>
+      <title><![CDATA[JVM调优之jstack找出最耗cpu的线程并定位代码]]></title>
+      <url>/2017/11/30/2017-11-30--JVM%E8%B0%83%E4%BC%98%E4%B9%8Bjstack%E6%89%BE%E5%87%BA%E6%9C%80%E8%80%97cpu%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%AE%9A%E4%BD%8D%E4%BB%A3%E7%A0%81/</url>
+      <content type="html"><![CDATA[<p>第一步：先找出java的进程Id(PID) 假设java应用名称是zcg_commodity</p>
+<p>ps -ef|grep zcg_commodity</p>
+<p><img src="data:image/png;base64,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" alt="img"></p>
+<p>得到进程Id为32464</p>
+<a id="more"></a>
+<p>第二步：找出该进程内最消耗CPU的线程</p>
+<p>top -Hp pid</p>
+<p>输入top -Hp 32464</p>
+<p><img src="data:image/png;base64,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" alt="img"></p>
+<p>TIME列就是各个java线程耗费的CPU的时间，比如图中是线程ID的为2012的线程，</p>
+<p>通过 printf “%x\n” 2012</p>
+<p>得到2012的十六进制为 7dc</p>
+<p>第三步：</p>
+<p>一般会进到jdk的bin目录下，root权限执行</p>
+<p>jstack 32464|grep 7dc</p>
+<p>PollIntervalRetrySchedulerThread” prio=10 tid=0x00007f950043e000 nid=0x54ee in Object.wait()</p>
+<p>定位问题所在</p>
+<p>之前有遇到前几个消耗CPU的线程都是GC的，那可能是短时间内存泄露严重，导致GC回收不过来，导致CPU短时间飙升</p>
+<p>这种情况用jmap -histo:live 32464 |head -20，查看哪个对象生成异常，就可以定位问题大方向</p>
+<p>第四步：</p>
+<p>查代码</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 调优 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> JVM </tag>
+            
+            <tag> 调优 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[JVM内存模型]]></title>
+      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
+      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+<a id="more"></a>
+<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
+<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
+<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
+<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
+<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
+<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
+]]></content>
+      
+        <categories>
+            
+            <category> JVM </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> JVM </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[jstack及dump文件分析]]></title>
+      <url>/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>jstack命令的用法为jstack pid</p>
+<p>jstack在jdk/bin的目录下</p>
+<p>在实际运行中，建议产生3次以上的dump文件，每次间隔10s左右，文件一起分析来能定位问题，不要拿一次的dump文件来分析问题，没有什么参考性。</p>
+<p>dump文件中的线程状态值有：</p>
+<a id="more"></a>
+<p>1.死锁，Deadlock</p>
+<p>2.执行中，Runnable</p>
+<p>3.等待资源，Waiting on condition</p>
+<p>4.等待获取监视器，Waiting on monitor entry</p>
+<p>5.暂停，Suspended</p>
+<p>6.对象等待中，Object.wait()或TIMED_WAITING</p>
+<p>7.阻塞，Blocked</p>
+<p>8.停止，Parked</p>
+<p>含义分析如下：</p>
+<p>1.Deadlock:死锁线程，一般指多个线程调用间，进入相互资源占用，导致一直等待无法释放的情况。</p>
+<p>2.Runable:一般指该线程正在执行状态中，该线程占用了资源，正在处理某个请求，有可能正在传递SQL到数据库执行，有可能在对某个文件进行操作，有可能进行数据类型转换。</p>
+<p>3.Waiting on condition:等待资源，或等待某个条件的发生。具体原因需结合stacktrace来分析。</p>
+<pre><code>如果堆栈信息明确是应用代码，则证明该线程正在等待资源。一般是大量读取某资源，且该资源采用了资源锁的情况下，线程进入了等待状态，等待资源的读取。
+
+或正在等待其他现场的执行
+
+如果发现有大量的线程都处在Wait on Condition，从线程的stack看，正等待网络读写，这可能是一个网络瓶颈的征兆，是因为网络阻塞导致线程无法执行，一种情况是网络非常忙，几乎消耗了所有带宽，仍然有大量的数据等待网络读写；另一种情况也可能是网络空闲，但由于路由等问题，导致包无法正常的到达。
+
+又或者是该线程在sleep,等待sleep的时间到了，将被唤醒
+</code></pre><p>4.Blocked：线程阻塞，是指当前线程执行过程中，所需要的资源长时间等待却一直未能获取到，被容器的线程管理器表示为阻塞状态，可以理解为等待资源超时的线程。</p>
+<p>5.Waiting for monitor entry 和 in Object.wait(): monitor是java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者Class的锁。每一个对象都有且只有一个monitor。当某个线程期待获得Monitor及对象的锁，而在锁被其他线程拥有的时候，这个线程就会进入Entry Set区域。曾经获得过锁，但是其他必要条件不满足而需要wait的线程就进入了Wait Set区域。</p>
+<p>举例分析：</p>
+<p>Waiting to lock 和 Blocked</p>
+<p>实例：</p>
+<p>“RMI TCP Connection(267865)-172.16.5.25” daemon prio=10 tid=0x00007fd508371000 nid=0x55ae  waiting for monitor entry [0x00007fd4f8684000]</p>
+<p>   java.lang.Thread.State:  BLOCKED (on object monitor)</p>
+<p>at org.apache.log4j.Category.callAppenders(Category.java:201)</p>
+<ul>
+<li>waiting to lock <0x00000000acf4d0c0> (a org.apache.log4j.Logger)</0x00000000acf4d0c0></li>
+</ul>
+<p>at org.apache.log4j.Category.forcedLog(Category.java:388)</p>
+<p>at org.apache.log4j.Category.log(Category.java:853)</p>
+<p>at org.apache.commons.logging.impl.Log4JLogger.warn(Log4JLogger.java:234)</p>
+<p>at com.tuan.core.common.lang.cache.remote.SpyMemcachedClient.get(SpyMemcachedClient.java:110)</p>
+<p>分析：</p>
+<p>1）线程状态时Blocked，即阻塞状态。说明线程等待资源超时！</p>
+<p>2）“waiting to lock<0x00000000acf4d0c0>”指的是线程在等待给这个0x00000000acf40c0地址上锁。</0x00000000acf4d0c0></p>
+<p>3）如果在dump日志里查找字符串0x00000000acf40c0,发现有大量的线程在等待给这个地址上锁。如果能找到dump日志里哪个线程获得了这个锁，然后在我们自己打印的log中查到该线程，就能定位到具体位置。</p>
+<p>4）”waiting for monitor entry”说明此线程通过synchronized(obj){……}申请进入临界区，进入到了Entry Set队列，但该obj对应的monitor被其他线程拥有，所以本线程在Entry Set中等待。</p>
+<p>5）第一行里，“RMI TCP Connection(267865)-172.16.5.25”是Thread Name。tid 指java Thread id。nid 指native线程的id。prio是线程的优先级。[0x00007fd4f8684000]是线程栈起始地址。</p>
+<p>示例二：Waiting on condition 和 TIME_WAITING</p>
+<p>示例：</p>
+<p>“RMI TCP Connection(idle)” daemon prio=10 tid=0x00007fd50834e800 nid=0x56b2  waiting on condition [0x00007fd4f1a59000]</p>
+<p>   java.lang.Thread.State:  TIMED_WAITING (parking)</p>
+<p>at sun.misc.Unsafe.park(Native Method)</p>
+<ul>
+<li>parking to wait for  <0x00000000acd84de8> (a java.util.concurrent.SynchronousQueue$TransferStack)</0x00000000acd84de8></li>
+</ul>
+<p>at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:198)</p>
+<p>at java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue.java:424)</p>
+<p>at java.util.concurrent.SynchronousQueue$TransferStack.transfer(SynchronousQueue.java:323)</p>
+<p>at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:874)</p>
+<p>at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:945)</p>
+<p>at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:907)</p>
+<p>at java.lang.Thread.run(Thread.java:662)</p>
+<p>1)“TIME_WAITING(parking)”中的time_waiting指等待状态，但这里指定了时间，到达指定时间后自动退出等待状态；parking指线程处于挂起中。</p>
+<p>2）“waiing on condition”需要与堆栈中的“parking to wait for <0x00000000acd84de8>(a java.util.concurrent.SynchronousQueue$TransferStack) ”结合来看。首先，本线程肯定是在等待某个条件的发生，来把自己唤醒。其次，SynchronousQueue并不是一个队列，只是线程之间移交信息的机制，当我们把一个元素放入到SynchronousQueue中时必须有另一个线程正在等待接收移交的任务，因此这就是本线程在等待的条件。</0x00000000acd84de8></p>
+<p>示例三：in Object.wait() 和 TIMED_WAITING</p>
+<p>示例如下：</p>
+<p>“RMI RenewClean-[172.16.5.19:28475]” daemon prio=10 tid=0x0000000041428800 nid=0xb09  in Object.wait() [0x00007f34f4bd0000]</p>
+<p>   java.lang.Thread.State:  TIMED_WAITING (on object monitor)</p>
+<p>at java.lang.Object.wait(Native Method)</p>
+<ul>
+<li>waiting on <0x00000000aa672478> (a java.lang.ref.ReferenceQueue$Lock)</0x00000000aa672478></li>
+</ul>
+<p>at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:118)</p>
+<ul>
+<li>locked <0x00000000aa672478> (a java.lang.ref.ReferenceQueue$Lock)</0x00000000aa672478></li>
+</ul>
+<p>at sun.rmi.transport.DGCClient$EndpointEntry$RenewCleanThread.run(DGCClient.java:516)</p>
+<p>at java.lang.Thread.run(Thread.java:662)</p>
+<p>1）“TIMED_WAITING(on object monitor)”,对于本例而言，是因为本线程调用了java.lang.Object.wait(long timeout)而进入等待状态。</p>
+<p>2）“Wait Set”中等待的线程状态就是“in Object.wait()”。 当线程获得了Monitor，进入了临界区之后，如果发现线程继续运行的条件没有满足，他则调用对象（一般就是被synchronized的对象）的wait()方法，放弃了Monitor，进入Wait Set队列。只有当别的线程在该对象上调用了notify()或者notifyAll(),“Wait Set”队列中线程才得到机会去竞争，但是只有一个线程获得对象的Monitor，恢复到运行态。</p>
+<p>3）RMI RenewClean是DGCClient的一部分。DGC指的是Distributed GC,即分布式垃圾回收。</p>
+<p>4）请注意，是先locked<0x00000000aa672478>，后waiting on<0x00000000aa672478>，之所以先锁在等同一个对象，分析代码如下：</0x00000000aa672478></0x00000000aa672478></p>
+<p>static private class  Lock { };</p>
+<p>private Lock lock = new Lock();</p>
+<p>public Reference&lt;? extends T&gt;  <a href="http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java" target="_blank" rel="noopener">remove</a>(long timeout)</p>
+<p>{</p>
+<pre><code>synchronized (lock) {
+
+    Reference&lt;? extends T&gt; r =  [reallyPoll](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java#ReferenceQueue.reallyPoll%28%29)();
+
+    if (r != null) return r;
+
+    for (;;) {
+
+         [lock](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java#ReferenceQueue.0lock). [wait](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/Object.java#Object.wait%28long%29)(timeout);
+
+        r =  [reallyPoll](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java#ReferenceQueue.reallyPoll%28%29)();
+
+        ……
+
+   }
+</code></pre><p>}</p>
+<p>即，线程的执行中，先用synchronized获得了这个对象的Monitor(对应于locked<0x00000000aa672478>)；当执行到lock.wait(timeout)，线程就放弃了Monitor的所有权，进入“Wait Set”队列</0x00000000aa672478></p>
+<p>5）从堆栈信息看，是正在清理remote references to  remote objects,引用的租约到了，分布式垃圾回收在逐一清理呢。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 调优 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 调优 </tag>
+            
+            <tag> jstack </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[spring aop源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>源码分析：</p>
+<p>这里先描述aop的具体流程：</p>
+<p>一、解析xml</p>
+<p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p>
+<a id="more"></a>
+<p>2.在parse函数里面解析这个标签①加载一个bean，这个bean的功能是根据注解来给相应的bean创建代理②处理proxy-target-class属性，当这个属性为true时，创建的代理是CGLIB 代理，处理 expose-proxy这个属性，这个属性为true，允许用户通过上下文的方式实现类内部调用也能增强。</p>
+<p>二、加载bean</p>
+<p>1.初始化bean的时候，在bean initialize之后会调用postProcessObjectFromFactoryBean方法</p>
+<p>2.该方法中调用wrapIfNecessary方法，该方法中有两个重要的步骤①getAdvicesAndAdvisorsForBean获取该bean的所有拦截器，这个方法中分几个步骤：获取beanFactory中所有的bean，遍历找出AspectJ注解的bean,获取bean中所有的拦截器，存到缓存中，然后找到适合当前bean的所有拦截器②创建代理createProxy,这个方法中会根据用户配置比如proxy-target-class，被代理类是否implement接口等等来决定是否用jdk代理还是CGLIB代理，然后创建相应代理。</p>
+<p>这里讲解一下jdk代理和CGLIB代理的区别和两者的源码分析：</p>
+<p>jdk代理：是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理</p>
+<p>CGLIB代理：利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理</p>
+<p>1.如果目标对象实现了接口，默认情况下采取jdk的动态代理</p>
+<p>2.如果目标对象实现了接口，可以强制采用CGLIB代理</p>
+<p>3.如果目标没有实现接口，只能采用CGLIB代理</p>
+<p>jdk代理使用方法：</p>
+<p><code>public interface Say {</code></p>
+<pre><code>void say();
+</code></pre><p><code>}</code></p>
+<p><code>public class SayImpl implements Say {</code></p>
+<pre><code>@Override
+
+public void say() {
+
+    System.out.println(&quot;say hello&quot;);
+
+}
+</code></pre><p><code>}</code></p>
+<p><code>public class MyInvocationHandler implements InvocationHandler{</code></p>
+<pre><code>private Object targetObject;
+
+@Override
+
+public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+    System.out.println(&quot;say before&quot;);
+
+    Object object = method.invoke(targetObject,args);
+
+    System.out.println(&quot;say after&quot;);
+
+    return object;
+
+}
+
+public Object newProxy(Object targetObject){
+
+    this.targetObject=targetObject;
+
+    return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(),targetObject.getClass().getInterfaces(),this);
+
+}
+</code></pre><p><code>}</code></p>
+<p><code>public class TestJDKProxy {</code></p>
+<pre><code>public static void main(String[] args){
+
+    MyInvocationHandler myInvocationHandler = new MyInvocationHandler();
+
+    Say say = (Say) myInvocationHandler.newProxy(new SayImpl());
+
+    say.say();
+
+}
+</code></pre><p><code>}</code></p>
+<p>根据源码分析生成的代理类叫ProxyN，所以在生成代理之后，把这个类写到硬盘，通过以下这个方法：</p>
+<p><code>public class Util {</code></p>
+<pre><code>public static void writeProxyClassToHardDisk(String path){
+
+    byte[] classFile = ProxyGenerator.generateProxyClass(&quot;$Proxy0&quot;, SayImpl.class.getInterfaces());
+
+    FileOutputStream out = null;
+
+    try{
+
+        out = new FileOutputStream(path);
+
+        out.write(classFile);
+
+        out.flush();
+
+    }catch (Exception e){
+
+        e.printStackTrace();
+
+    }finally {
+
+        try{
+
+            out.close();
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+
+        }
+
+    }
+
+}
+</code></pre><p><code>}</code></p>
+<p>此时通过反编译生成的class文件，即可得到生成代理类的源码如下：</p>
+<p><code>public final class $Proxy0 extends Proxy</code></p>
+<p>   implements Say</p>
+<p><code>{</code></p>
+<p>   private static Method m3;</p>
+<p>   private static Method m1;</p>
+<p>   private static Method m0;</p>
+<p>   private static Method m2;</p>
+<p>   public $Proxy0(InvocationHandler invocationhandler)</p>
+<p>   {</p>
+<pre><code>super(invocationhandler);
+</code></pre><p>   }</p>
+<p>   public final void say()</p>
+<p>   {</p>
+<pre><code>try
+
+{
+
+   super.h.invoke(this, m3, null);
+
+   return;
+
+}
+
+catch (Error ) { }
+
+catch (Throwable throwable)
+
+{
+
+   throw new UndeclaredThrowableException(throwable);
+
+}
+</code></pre><p>   }</p>
+<p>   public final boolean equals(Object obj)</p>
+<p>   {</p>
+<pre><code>try
+
+{
+
+   return ((Boolean)super.h.invoke(this, m1, new Object[] {
+
+      obj
+
+   })).booleanValue();
+
+}
+
+catch (Error ) { }
+
+catch (Throwable throwable)
+
+{
+
+   throw new UndeclaredThrowableException(throwable);
+
+}
+</code></pre><p>   }</p>
+<p>   public final int hashCode()</p>
+<p>   {</p>
+<pre><code>try
+
+{
+
+   return ((Integer)super.h.invoke(this, m0, null)).intValue();
+
+}
+
+catch (Error ) { }
+
+catch (Throwable throwable)
+
+{
+
+   throw new UndeclaredThrowableException(throwable);
+
+}
+</code></pre><p>   }</p>
+<p>   public final String toString()</p>
+<p>   {</p>
+<pre><code>try
+
+{
+
+   return (String)super.h.invoke(this, m2, null);
+
+}
+
+catch (Error ) { }
+
+catch (Throwable throwable)
+
+{
+
+   throw new UndeclaredThrowableException(throwable);
+
+}
+</code></pre><p>   }</p>
+<p>   static </p>
+<p>   {</p>
+<pre><code>try
+
+{
+
+   m3 = Class.forName(&quot;com.springapp.mvc.Proxy.jdkProxy.Say&quot;).getMethod(&quot;say&quot;, new Class[0]);
+
+   m1 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;equals&quot;, new Class[] {
+
+      Class.forName(&quot;java.lang.Object&quot;)
+
+   });
+
+   m0 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;hashCode&quot;, new Class[0]);
+
+   m2 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;toString&quot;, new Class[0]);
+
+}
+
+catch (NoSuchMethodException nosuchmethodexception)
+
+{
+
+   throw new NoSuchMethodError(nosuchmethodexception.getMessage());
+
+}
+
+catch (ClassNotFoundException classnotfoundexception)
+
+{
+
+   throw new NoClassDefFoundError(classnotfoundexception.getMessage());
+
+}
+</code></pre><p>   }</p>
+<p><code>}</code></p>
+<p>cglib代理的使用方法：</p>
+<p><code>public class SayHello {</code></p>
+<pre><code>public void say(){
+
+    System.out.println(&quot;hello everyone&quot;);
+
+}
+</code></pre><p><code>}</code></p>
+<p><code>public class CglibProxy implements MethodInterceptor {</code></p>
+<pre><code>private Enhancer enhancer = new Enhancer();
+
+public Object getProxy(Class clazz){
+
+    enhancer.setSuperclass(clazz);
+
+    enhancer.setCallback(this);
+
+    return enhancer.create();
+
+}
+
+@Override
+
+public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+
+    System.out.println(&quot;前置代理&quot;);
+
+    Object res = methodProxy.invokeSuper(o,objects);
+
+    System.out.println(&quot;后置处理&quot;);
+
+    return res;
+
+}
+</code></pre><p><code>}</code></p>
+<p><code>public class DoCglib {</code></p>
+<pre><code>public static void main(String[] args){
+
+    CglibProxy proxy = new CglibProxy();
+
+    SayHello proxyImpl = (SayHello)proxy.getProxy(SayHello.class);
+
+    proxyImpl.say();
+
+}
+</code></pre><p><code>}</code></p>
+<p>spring中jdk代理的处理：</p>
+<p>spring中的jdkDynamicAopProxy确实实现了InvocationHandler接口，其中也包含了getProxy和invoke。其中getProxy函数创建了代理，</p>
+<p>invoke函数里面包含了AOP的核心逻辑，这个方法逻辑：</p>
+<p>1.处理equals方法</p>
+<p>2.处理hash方法</p>
+<p>3.处理expose属性，当这个属性为true时，暴露代理来实现内部调用是能通过代理实现增强</p>
+<p>4.获取当前方法的所有拦截器</p>
+<p>5.如果没有拦截器,那么直接调用切点方法，如果有会将拦截器封装到ReflectiveMethodInvocation</p>
+<p>6.调用ReflectiveMethodInvocation类中的proceed方法</p>
+<p>7.proceed方法中维护了链接调用的计数器，记录当前调用链接的位置，他会根据传入的拦截器链获取要执行的拦截器，然后实例化InterceptorAndDynamicMethodMatcher,InterceptorAndDynamicMethodMatcher中有两个属性MethodInterceptor、MethodMatcher,这两个属性的作用分别是：MethodInterceptor是一个接口，所以他会根据传入不同的拦截器来分发给不同的继承类来实现具体逻辑，比如传入前置拦截器，具体实现则交给了MethodBeforeAdviceInterceptor，在这个类invoke（会传入当前类当参数）方法中会先调用MethodBeforeAdvice的before方法，然后再调用传入类的proceed方法，以此循环，最终执行完拦截器链中的所有拦截器；MethodMatcher是方法匹配器，来检查当前拦截器是否适用当前方法，如果适用则执行拦截器，不适用则略过当前拦截器。</p>
+<p>spring中cglib代理的处理：</p>
+<p>三、调用方法</p>
+<p>jdk代理：由于生成了代理匿名类，所以当调用被代理类的某个方法时，会调用代理类中的invoke方法，具体实现上面已经讲到了。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 源码 </tag>
+            
+            <tag> spring </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[ArrayList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
+</code></pre><a id="more"></a>
+<pre><code>     return true;
+
+}
+</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
+<p>其中的ensureCapacityInternal函数的源码为：</p>
+<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
+<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+
+     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+
+}
+
+ensureExplicitCapacity(minCapacity);
+</code></pre><p><code>}</code></p>
+<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
+<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+
+     modCount++;
+
+     if(minCapacity - elementData.length&gt;0){
+
+          grow(minCapacity);
+
+     }
+
+}
+</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
+<p>grow()的源码为：</p>
+<p><code>private void grow(int minCapacity){</code></p>
+<pre><code>int oldCapacity = elementData.length;
+
+int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+
+if(newCapacity - minCapacity&lt;0)
+
+     newCapacity=minCapacity;
+
+if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+
+     newCapacity = hugeCapacity(minCapacity);
+
+ elementData = Arrays.copyof(element,newCapacity);
+</code></pre><p><code>}</code></p>
+<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
+<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
+<p><code>public E remove(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+modCount++;
+
+E oldValue=elementData(index);
+
+int numMoved = size -index -1;
+
+if(numMoved&gt;0){
+
+     System.arraycopy(elementData,index+1,elementData,index,numMoved);
+
+}
+
+elementData[--size]=null;
+
+return oldValue;
+</code></pre><p> <code>}</code></p>
+<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
+<p>我们再看get的源码:</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+return ArrayList.this.elementData(offset+index);
+</code></pre><p><code>}</code></p>
+<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
+<p><code>public E set(int index,E e){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+E oldValue = Array.this.elementData(offset + index);
+
+ArrayList.this.elementData[offset +index]=e;
+
+return oldValue;
+</code></pre><p><code>}</code></p>
+<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
+<p>contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)&gt;=0;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>if(o==null){
+
+     for(int i=0;i&lt;size;i++){
+
+          if(elementData[i]==null)
+
+               return i;
+
+     }
+
+}else {
+
+     for(int i=0;i&lt;size;i++){
+
+          if(o.equals(elementData[i))
+
+               return i;
+
+     }
+
+}
+
+return -1;
+</code></pre><p><code>}</code></p>
+<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
+<p>还有clone的源码：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>try{
+
+     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
+
+     v.elementData = Arrays.copyof(elementData,size);
+
+     v.modCount = 0;
+
+}catch(CloneNotSupportedException e){
+
+     throw new InternalError();
+
+}
+</code></pre><p><code>}</code></p>
+<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[LinkedList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>LinkedList的基本存储结构是链表</p>
+<p>LinkedList的节点元素的存储结构为：</p>
+<pre><code>`private static class Node&lt;E&gt;{`
+
+     E item;
+
+     Node&lt;E&gt; next;
+</code></pre><a id="more"></a>
+<pre><code>     Node&lt;E&gt; prev;
+
+     Node(Node&lt;E&gt; prev,E element,Node&lt;E&gt; next){
+
+          this.item = element;
+
+          this.next = next;
+
+          this.prev = prev;
+
+     }
+
+`}`
+</code></pre><p>LinkedList的add源码为：</p>
+<p><code>public boolean add(E e){</code></p>
+<pre><code>linkLast(e);
+
+return true;
+</code></pre><p><code>}</code></p>
+<p><code>void linkLast(E e){</code></p>
+<pre><code>final Node&lt;E&gt; l = last;
+
+final Node&lt;E&gt; newNode = new Node&lt;&gt;(l,e,null);
+
+last = newNode;
+
+if(l==null)
+
+     first = newNode;
+
+else
+
+     l.next = newNode;
+
+size++;
+
+modCount++;
+</code></pre><p><code>}</code></p>
+<p>因为LinkedList的基本结构是链表，所以add就是在链表的末尾添加一个节点，然后size++，当last==null代表改list为空的，所以头结点置为newNode</p>
+<p>linkedList的remove源码为：</p>
+<p><code>public boolean remove(Object o){</code></p>
+<pre><code>if(o==null){
+
+     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
+
+          if(x.item == null){
+
+               unlink(x);
+
+               return true;
+
+          }
+
+     }
+
+}else{
+
+     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
+
+          if(o.equals(x.item)){
+
+               unlink(x);
+
+               return true;
+
+          }
+
+     }
+
+}
+
+return false;
+</code></pre><p><code>}</code></p>
+<p>linkedList的remove就是从头遍历节点，然后调用unlink来remove节点，unlink的源码如下：</p>
+<p>   <code>E unlink(Node&lt;E&gt; x){</code></p>
+<pre><code>     final E element = x.item;
+
+     final Node&lt;E&gt; next = x.next;
+
+     final Node&lt;E&gt; prev = x.prev;
+
+     if(prev == null){
+
+          first=next;
+
+     }else{
+
+          prev.next = next;
+
+          x.prev = null;
+
+     }
+
+     if(next == null){
+
+          last=prev;
+
+     }else{
+
+          next.prev=prev;
+
+          x.next = null;
+
+     }
+
+     x.item = null;
+
+     size--;
+
+     modCount++;
+
+     return element;
+
+}
+</code></pre><p>``unlink就是把元素的前节点的next指向该元素的next,把元素的后节点的prev指向该元素的prev,然后把该元素的prev和next和item置为null,方便GC回收。</p>
+<p>linkedList的get的源码为：</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>checkElementIndex(index);
+
+return node(index).item;
+</code></pre><p><code>}</code></p>
+<p>get的时候先检测了index是否&lt;0或者大于size,若是则抛出异常。node()的源码为：</p>
+<p>N<code>ode&lt;E&gt; node(int index){</code></p>
+<pre><code>if(index&lt;(size&gt;&gt;1)){
+
+     Node&lt;E&gt; x = first;
+
+     for(int i=0;i&lt;index;i++)
+
+          x=x.next;
+
+     return x;
+
+}else{
+
+     Node&lt;E&gt; x = last;
+
+     for(int i=size-1;i&gt;index;i--)
+
+          x = x.prev;
+
+     return x;
+
+}
+</code></pre><p><code>}</code></p>
+<p>node方法就是先判断一下index接近first还是last，然后决定从哪个方向开始查找。</p>
+<p>linkedList的contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)!=-1;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>int index = 0;
+
+if(o==null){
+
+     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
+
+          if(x.item == null)
+
+               return index;
+
+          index++;
+
+     }
+
+}else{
+
+     for(Node&lt;E&gt; x = first;x!=null;x=x.next){
+
+             if(o.equals(x.item))
+
+                    return index;
+
+               index++;
+
+     }
+
+}
+
+return -1;
+</code></pre><p><code>}</code></p>
+<p>contains就是从first开始遍历，查到就返回index</p>
+<p>linkedList的clone的源码为：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>LinkedList&lt;E&gt; clone = superClone();
+
+clone.first = clone.last=null;
+
+clone.size=0;
+
+clone.modCount = 0;
+
+for(Node&lt;E&gt; x=first;x!=null;x=x.next)
+
+     clone.add(x.item);
+
+return clone;
+</code></pre><p><code>}</code></p>
+<p>``LinkedList的clone是浅克隆，只是克隆了引用。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[hashMap源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
+</code></pre><a id="more"></a>
+<pre><code>        inflateTable(threshold);
+
+    }
+
+    if (key == null)
+
+        return putForNullKey(value);
+
+    int hash = hash(key);
+
+    int i = indexFor(hash, table.length);
+
+    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
+
+        Object k;
+
+        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
+
+            V oldValue = e.value;
+
+            e.value = value;
+
+            e.recordAccess(this);
+
+            return oldValue;
+
+        }
+
+    }
+
+    modCount++;
+
+    addEntry(hash, key, value, i);
+
+    return null;
+
+`}`
+</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
+<pre><code>`final int hash(Object k) {`
+
+    int h = hashSeed;
+
+    if (0 != h &amp;&amp; k instanceof String) {
+
+        return sun.misc.Hashing.stringHash32((String) k);
+
+    }
+
+    h ^= k.hashCode();
+
+    // This function ensures that hashCodes that differ only by
+
+    // constant multiples at each bit position have a bounded
+
+    // number of collisions (approximately 8 at default load factor).
+
+    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
+
+    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+
+`}`
+</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
+<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
+
+    int newCapacity = newTable.length;
+
+    for (Entry&lt;K,V&gt; e : table) {
+
+        while(null != e) {
+
+            Entry&lt;K,V&gt; next = e.next;
+
+            if (rehash) {
+
+                e.hash = null == e.key ? 0 : hash(e.key);
+
+            }
+
+            int i = indexFor(e.hash, newCapacity);
+
+            e.next = newTable[i];
+
+            newTable[i] = e;
+
+            e = next;
+
+        }
+
+    }
+
+`}`
+</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
+<p>以上中的Entry的结构是：</p>
+<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
+<pre><code>final K key;
+
+V value;
+
+Entry&lt;K,V&gt; next;
+
+int hash;
+</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
+<pre><code>    value = v;
+
+    next = n;
+
+    key = k;
+
+    hash = h;
+
+}
+</code></pre><p><code>}</code></p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 源码 </tag>
+            
+            <tag> hashMap </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[破解x-pack]]></title>
       <url>/2017/11/28/%E7%A0%B4%E8%A7%A3x-pack/</url>
       <content type="html"><![CDATA[<h1 id="x-pack-安装步骤如下"><a href="#x-pack-安装步骤如下" class="headerlink" title="x-pack 安装步骤如下:"></a>x-pack 安装步骤如下:</h1><h3 id="1-在ES5-0安装-X-PACK"><a href="#1-在ES5-0安装-X-PACK" class="headerlink" title="1.在ES5.0安装 X-PACK"></a>1.在ES5.0安装 X-PACK</h3><p>bin/elasticsearch-plugin install x-pack</p>
@@ -78,24 +1187,6 @@
             <tag> 数据 </tag>
             
         </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Hello World]]></title>
-      <url>/2017/11/28/hello-world/</url>
-      <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><a id="more"></a>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-]]></content>
-      
         
     </entry>
     

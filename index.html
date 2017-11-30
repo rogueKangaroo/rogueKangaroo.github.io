@@ -264,6 +264,1222 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--JVM调优之jstack找出最耗cpu的线程并定位代码/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--JVM调优之jstack找出最耗cpu的线程并定位代码/" itemprop="url">JVM调优之jstack找出最耗cpu的线程并定位代码</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T12:00:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/调优/" itemprop="url" rel="index">
+                    <span itemprop="name">调优</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>第一步：先找出java的进程Id(PID) 假设java应用名称是zcg_commodity</p>
+<p>ps -ef|grep zcg_commodity</p>
+<p><img src="data:image/png;base64,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" alt="img"></p>
+<p>得到进程Id为32464</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--JVM调优之jstack找出最耗cpu的线程并定位代码/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--JVM内存模型/" itemprop="url">JVM内存模型</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:50:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--JVM内存模型/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--jstack及dump文件分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--jstack及dump文件分析/" itemprop="url">jstack及dump文件分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:50:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/调优/" itemprop="url" rel="index">
+                    <span itemprop="name">调优</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>jstack命令的用法为jstack pid</p>
+<p>jstack在jdk/bin的目录下</p>
+<p>在实际运行中，建议产生3次以上的dump文件，每次间隔10s左右，文件一起分析来能定位问题，不要拿一次的dump文件来分析问题，没有什么参考性。</p>
+<p>dump文件中的线程状态值有：</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--jstack及dump文件分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--spring-aop源码分析/" itemprop="url">spring aop源码分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:00:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>源码分析：</p>
+<p>这里先描述aop的具体流程：</p>
+<p>一、解析xml</p>
+<p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--spring-aop源码分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--分析String源码所得/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--分析String源码所得/" itemprop="url">分析String源码所得</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:00:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--分析String源码所得/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--ArrayList源码分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--ArrayList源码分析/" itemprop="url">ArrayList源码分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T10:30:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
+</code></pre>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--ArrayList源码分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--LinkedList源码分析/" itemprop="url">LinkedList源码分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T10:30:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>LinkedList的基本存储结构是链表</p>
+<p>LinkedList的节点元素的存储结构为：</p>
+<pre><code>`private static class Node&lt;E&gt;{`
+
+     E item;
+
+     Node&lt;E&gt; next;
+</code></pre>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--LinkedList源码分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--hashMap源码分析/" itemprop="url">hashMap源码分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T10:30:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
+</code></pre>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--hashMap源码分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/28/破解x-pack/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -401,133 +1617,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/28/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="刘凯召">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/headimg.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="有态度">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/11/28/hello-world/" itemprop="url">Hello World</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-28T11:24:47+08:00">
-                2017-11-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/11/28/hello-world/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-  
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <!-- <div class="post-eof"></div> -->
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -578,7 +1667,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">9</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -589,7 +1678,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -600,7 +1689,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">9</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>

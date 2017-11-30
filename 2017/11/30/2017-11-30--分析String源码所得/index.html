@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="技术,java,后台" />
+  <meta name="keywords" content="java,源码," />
 
 
 
@@ -81,16 +81,18 @@
 
 
 
-<meta name="description" content="态度决定深度">
-<meta property="og:type" content="website">
-<meta property="og:title" content="有态度">
-<meta property="og:url" content="http://yoursite.com/tags/数据/index.html">
+<meta name="description" content="1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。 2.String 源码分析 public boolean equals(Object anObject) { if (this == anOb">
+<meta name="keywords" content="java,源码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分析String源码所得">
+<meta property="og:url" content="http://yoursite.com/2017/11/30/2017-11-30--分析String源码所得/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="态度决定深度">
+<meta property="og:description" content="1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。 2.String 源码分析 public boolean equals(Object anObject) { if (this == anObject) {">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-11-30T03:23:51.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="有态度">
-<meta name="twitter:description" content="态度决定深度">
+<meta name="twitter:title" content="分析String源码所得">
+<meta name="twitter:description" content="1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。 2.String 源码分析 public boolean equals(Object anObject) { if (this == anObject) {">
 
 
 
@@ -120,13 +122,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/tags/数据/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/11/30/2017-11-30--分析String源码所得/"/>
 
 
 
 
 
-  <title>标签: 数据 | 有态度</title>
+  <title>分析String源码所得 | 有态度</title>
   
 
 
@@ -145,7 +147,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -249,54 +251,230 @@
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block tag">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>数据<small>标签</small>
-        </h1>
-      </div>
+  
 
-      
-        
+  
+  
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--分析String源码所得/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2017/11/28/破解x-pack/" itemprop="url">
-              
-                <span itemprop="name">破解x-pack</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">分析String源码所得</h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-11-28T17:48:33+08:00"
-              content="2017-11-28" >
-          11-28
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:00:00+08:00">
+                2017-11-30
+              </time>
+            
 
-    </header>
-  </article>
+            
 
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
 
       
     </div>
+    
+    
+    
 
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+
+      </div>
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java/" rel="tag"># java</a>
+          
+            <a href="/tags/源码/" rel="tag"># 源码</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/30/2017-11-30--ArrayList源码分析/" rel="next" title="ArrayList源码分析">
+                <i class="fa fa-chevron-left"></i> ArrayList源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/30/2017-11-30--spring-aop源码分析/" rel="prev" title="spring aop源码分析">
+                spring aop源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
+
+
+    <!-- <div class="post-spread">
+      
+    </div> -->
+  </div>
 
 
           </div>
@@ -304,6 +482,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -551,6 +733,10 @@
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
 
   
 
