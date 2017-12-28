@@ -81,23 +81,23 @@
 
 
 
-<meta name="description" content="1.简单动态字符串Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。 SDS结构struct sdshdr{  // 记录buf数组中已使用字节的数量   // 等于SDS所保存字符串的长度   int len;   // 记录buf数组中未使用字节的数量   int free;">
+<meta name="description" content="1.简单动态字符串Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。 SDS结构struct sdshdr{ // 记录buf数组中已使用字节的数量">
 <meta name="keywords" content="源码,redis">
 <meta property="og:type" content="article">
 <meta property="og:title" content="redis数据结构">
 <meta property="og:url" content="http://yoursite.com/2017/12/28/2017-12-28--redis数据结构/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="1.简单动态字符串Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。 SDS结构struct sdshdr{  // 记录buf数组中已使用字节的数量   // 等于SDS所保存字符串的长度   int len;   // 记录buf数组中未使用字节的数量   int free;  // 字节数组，用于保存字符串  char buf[]; };   如上图展">
+<meta property="og:description" content="1.简单动态字符串Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。 SDS结构struct sdshdr{ // 记录buf数组中已使用字节的数量">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/Users/liukaizhao/blog/public/images/redis/2017122801.png">
+<meta property="og:image" content="http://yoursite.com/images/redis/2017122801.png">
 <meta property="og:image" content="http://yoursite.com/Users/liukaizhao/blog/public/images/redis/2017122803.png">
 <meta property="og:image" content="http://yoursite.com/Users/liukaizhao/blog/public/images/redis/2017122802.png">
 <meta property="og:image" content="http://yoursite.com/Users/liukaizhao/blog/public/images/redis/2017122804.png">
-<meta property="og:updated_time" content="2017-12-28T07:41:59.000Z">
+<meta property="og:updated_time" content="2017-12-28T07:44:48.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="redis数据结构">
-<meta name="twitter:description" content="1.简单动态字符串Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。 SDS结构struct sdshdr{  // 记录buf数组中已使用字节的数量   // 等于SDS所保存字符串的长度   int len;   // 记录buf数组中未使用字节的数量   int free;  // 字节数组，用于保存字符串  char buf[]; };   如上图展">
-<meta name="twitter:image" content="http://yoursite.com/Users/liukaizhao/blog/public/images/redis/2017122801.png">
+<meta name="twitter:description" content="1.简单动态字符串Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。 SDS结构struct sdshdr{ // 记录buf数组中已使用字节的数量">
+<meta name="twitter:image" content="http://yoursite.com/images/redis/2017122801.png">
 
 
 
@@ -361,9 +361,9 @@
       
         <h1 id="1-简单动态字符串"><a href="#1-简单动态字符串" class="headerlink" title="1.简单动态字符串"></a>1.简单动态字符串</h1><p>Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。</p>
 <h2 id="SDS结构"><a href="#SDS结构" class="headerlink" title="SDS结构"></a>SDS结构</h2><p>struct sdshdr{</p>
-<pre><code> // 记录buf数组中已使用字节的数量
-
- // 等于SDS所保存字符串的长度
+<pre><code>// 记录buf数组中已使用字节的数量
+</code></pre><a id="more"></a>
+<pre><code> // 等于SDS所保存字符串的长度
 
  int len;
 
@@ -375,7 +375,7 @@
 
 char buf[];
 </code></pre><p>};</p>
-<p> <img src="/Users/liukaizhao/blog/public/images/redis/2017122801.png" alt="2017122801"></p>
+<p> <img src="/images/redis/2017122801.png" alt="2017122801"></p>
 <p>如上图展示：</p>
 <p>free 属性的值为0，表示这个SDS没有分配任何未使用空间</p>
 <p>len 属性的值为5，表示这个SDS保存了一个5字节长的字符串</p>

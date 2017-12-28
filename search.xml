@@ -7,9 +7,9 @@
       <url>/2017/12/28/2017-12-28--redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</url>
       <content type="html"><![CDATA[<h1 id="1-简单动态字符串"><a href="#1-简单动态字符串" class="headerlink" title="1.简单动态字符串"></a>1.简单动态字符串</h1><p>Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS作为字符串表示。</p>
 <h2 id="SDS结构"><a href="#SDS结构" class="headerlink" title="SDS结构"></a>SDS结构</h2><p>struct sdshdr{</p>
-<pre><code> // 记录buf数组中已使用字节的数量
-
- // 等于SDS所保存字符串的长度
+<pre><code>// 记录buf数组中已使用字节的数量
+</code></pre><a id="more"></a>
+<pre><code> // 等于SDS所保存字符串的长度
 
  int len;
 
@@ -21,7 +21,7 @@
 
 char buf[];
 </code></pre><p>};</p>
-<p> <img src="/Users/liukaizhao/blog/public/images/redis/2017122801.png" alt="2017122801"></p>
+<p> <img src="/images/redis/2017122801.png" alt="2017122801"></p>
 <p>如上图展示：</p>
 <p>free 属性的值为0，表示这个SDS没有分配任何未使用空间</p>
 <p>len 属性的值为5，表示这个SDS保存了一个5字节长的字符串</p>
@@ -563,6 +563,72 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[spring aop源码分析]]></title>
       <url>/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>源码分析：</p>
@@ -873,72 +939,6 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
             <tag> 源码 </tag>
             
             <tag> spring </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
-</code></pre><a id="more"></a>
-<pre><code>        return true;
-
-    }
-
-    if (anObject instanceof String) {
-
-        String anotherString = (String) anObject;
-
-        int n = value.length;
-
-        if (n == anotherString.value.length) {
-
-            char v1[] = value;
-
-            char v2[] = anotherString.value;
-
-            int i = 0;
-
-            while (n-- != 0) {
-
-                if (v1[i] != v2[i])
-
-                        return false;
-
-                i++;
-
-            }
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-`}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
             
         </tags>
         
