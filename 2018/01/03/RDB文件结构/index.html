@@ -81,18 +81,29 @@
 
 
 
-<meta name="description" content="数据库结构typedef struct redisDb { // 数据库键空间，保存着数据库中的所有键值对 dict *dict; } redisDb;">
+<meta name="description" content="RDB文件的创建1.save和bgsave​    save命令会阻塞redis服务器的进程，直到RDB文件创建为止，在服务器进程阻塞期间，服务器不能处理任何命令请求 ​    bgsave命令会派生出一个子进程，然后由子进程负责创建RDB文件，服务器进程（父进程）继续处理命令请求。">
 <meta name="keywords" content="源码,redis">
 <meta property="og:type" content="article">
-<meta property="og:title" content="redis数据库结构和操作">
-<meta property="og:url" content="http://yoursite.com/2018/01/03/redis数据库/index.html">
+<meta property="og:title" content="RDB持久化">
+<meta property="og:url" content="http://yoursite.com/2018/01/03/RDB文件结构/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="数据库结构typedef struct redisDb { // 数据库键空间，保存着数据库中的所有键值对 dict *dict; } redisDb;">
+<meta property="og:description" content="RDB文件的创建1.save和bgsave​    save命令会阻塞redis服务器的进程，直到RDB文件创建为止，在服务器进程阻塞期间，服务器不能处理任何命令请求 ​    bgsave命令会派生出一个子进程，然后由子进程负责创建RDB文件，服务器进程（父进程）继续处理命令请求。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-03T04:21:52.000Z">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/20180104.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010401.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010402.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010403.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010404.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010405.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010406.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010407.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010408.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/03/RDB文件结构/2018010409.png">
+<meta property="og:updated_time" content="2018-01-04T04:04:58.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="redis数据库结构和操作">
-<meta name="twitter:description" content="数据库结构typedef struct redisDb { // 数据库键空间，保存着数据库中的所有键值对 dict *dict; } redisDb;">
+<meta name="twitter:title" content="RDB持久化">
+<meta name="twitter:description" content="RDB文件的创建1.save和bgsave​    save命令会阻塞redis服务器的进程，直到RDB文件创建为止，在服务器进程阻塞期间，服务器不能处理任何命令请求 ​    bgsave命令会派生出一个子进程，然后由子进程负责创建RDB文件，服务器进程（父进程）继续处理命令请求。">
+<meta name="twitter:image" content="http://yoursite.com/2018/01/03/RDB文件结构/20180104.png">
 
 
 
@@ -122,13 +133,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/01/03/redis数据库/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/01/03/RDB文件结构/"/>
 
 
 
 
 
-  <title>redis数据库结构和操作 | 有态度</title>
+  <title>RDB持久化 | 有态度</title>
   
 
 
@@ -265,7 +276,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/03/redis数据库/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/03/RDB文件结构/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -282,7 +293,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">redis数据库结构和操作</h1>
+          <h1 class="post-title" itemprop="name headline">RDB持久化</h1>
         
 
         <div class="post-meta">
@@ -294,7 +305,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-03T11:32:34+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-03T15:08:20+08:00">
                 2018-01-03
               </time>
             
@@ -354,31 +365,67 @@
       
 
       
-        <h2 id="数据库结构"><a href="#数据库结构" class="headerlink" title="数据库结构"></a>数据库结构</h2><p>typedef struct redisDb {</p>
-<p>// 数据库键空间，保存着数据库中的所有键值对</p>
-<p>dict *dict;</p>
-<p>} redisDb;</p>
+        <h2 id="RDB文件的创建"><a href="#RDB文件的创建" class="headerlink" title="RDB文件的创建"></a>RDB文件的创建</h2><h3 id="1-save和bgsave"><a href="#1-save和bgsave" class="headerlink" title="1.save和bgsave"></a>1.save和bgsave</h3><p>​    save命令会阻塞redis服务器的进程，直到RDB文件创建为止，在服务器进程阻塞期间，服务器不能处理任何命令请求</p>
+<p>​    bgsave命令会派生出一个子进程，然后由子进程负责创建RDB文件，服务器进程（父进程）继续处理命令请求。</p>
 <a id="more"></a>
-<p>Redis 是一个键值对数据库服务器，服务器中的每个数据库都由一个redis.h/redisDb结构表示，其中，redisDb结构的dict字典保存了数据库中的所有键值对，我们将这个字典称为键空间</p>
-<p>键空间的键也就是数据库的键，每个键都是一个字符串对象</p>
-<p>键空间的值也就是数据库的值，每个值可以是字符串对象、列表对象、哈希表对象、集合对象和有序集合对象在内的任意一种Redis对象</p>
-<h2 id="Redis-操作"><a href="#Redis-操作" class="headerlink" title="Redis 操作"></a>Redis 操作</h2><p>添加新键 SET str “message”</p>
-<p>删除新键 DEL book（Redis使用惰性删除和定期删除两种策略来删除过期的键：惰性删除策略只在碰到过期键时才进行删除操作，定期删除策略则每隔一段时间，主动查询并删除过期键）</p>
-<p>更新键 SET str “description”</p>
-<p>对键取值 GET str</p>
-<p>清空数据库 FLUSHDB</p>
-<p>从键空间随机获得一个键 RANDOMKEY</p>
-<p>查询数据库键数量 DBSIZE</p>
-<p>还有EXIST、RENAME、KEYS，等等</p>
-<h2 id="读取键空间时的维护操作"><a href="#读取键空间时的维护操作" class="headerlink" title="读取键空间时的维护操作"></a>读取键空间时的维护操作</h2><p>当使用Redis命令对数据库进行读写时，服务器不仅会对键空间执行指定的读写操作，还会执行一些额外的维护操作，其中包括：</p>
+<h3 id="2-自动间隔性保存"><a href="#2-自动间隔性保存" class="headerlink" title="2.自动间隔性保存"></a>2.自动间隔性保存</h3><p>redis允许用户通过设置服务器的配置文件redis.conf文件中的save选项，让服务器每隔一段时间自动执行一次bgsave命令。比如：</p>
+<p>​    save 900 1       /<em> 服务器在900秒之内，对数据库进行了至少1次修改 </em>/</p>
+<p>​    save 300 10    /<em> 服务器在300秒之内，对数据库进行了至少10次修改 </em>/</p>
+<p>​    save 60 1000  /<em> 服务器在60秒之内，对数据库进行了至少1000次修改 </em>/</p>
+<p>原理：</p>
+<p>​    服务器会根据save选项所设置的保存条件，设置服务器状态redisServer结构的saveparams属性，该属性是一个数组，数组中每个元素都是一个saveparams结构，每个结构都保存了一个save选项设置的保存条件。</p>
+<p>​    服务器状态还维持着一个dirty计数器，以及一个lastsave属性</p>
+<p>​    dirty计数器记录距离上一次成功执行save命令或者bgsave命令之后，服务器对数据库状态进行了多少次修改</p>
+<p>​    lastsave属性是一个Unix时间戳，记录了服务器上一次成功执行save命令或者bgsave命令的时间</p>
+<h2 id="RDB文件的载入"><a href="#RDB文件的载入" class="headerlink" title="RDB文件的载入"></a>RDB文件的载入</h2><p>​    RDB文件的载入工作是在服务器启动时自动执行的，没有专门用于载入RDB文件的命令，只要redis服务器在启动时检测到RDB文件存在，它就会自动载入RDB文件期间，会一直处于阻塞状态，直到载入工作完成为止</p>
+<h2 id="RDB文件的结构"><a href="#RDB文件的结构" class="headerlink" title="RDB文件的结构"></a>RDB文件的结构</h2><p> <img src="/2018/01/03/RDB文件结构/20180104.png" alt="20180104"></p>
+<p>RDB文件结构如上：</p>
+<p>RDB文件的最开头是REDIS部分，这个部分的长度是5字节，保存着“REDIS”五个字符。通过这五个字符，程序可以在载入文件的时候，快速检查所载入的文件是否是RDB文件</p>
+<p>db_version 长度为4字节，它的值是一个字符串表示的整数，这个整数记录了RDB文件的版本号，比如“006”就代表RDB文件的版本为第六版</p>
+<p>datebases 的结构就是上图中的：</p>
+<p> <img src="/2018/01/03/RDB文件结构/2018010401.png" alt="2018010401"></p>
+<p>datebases 是由多个该结构组成</p>
+<p>SELECTDB 常量的长度为1字节，当读入程序遇到这个值的时候，它就知道接下来要读入的将是一个数据库号码</p>
+<p>db_number 保存着一个数据库的号码，根据号码的大小不同，这个部分的长度可以是1字节、2字节或者5字节。当程序读入db_number部分之后，服务器会调用SELECT命令，根据读入的数据库号码进行数据库切换，使得之后读入的键值对可以载入到正确的数据库中</p>
+<p>key_value_pairs部分保存了数据库中的所有键值对数据，如果键值对带有过期时间，那么过期时间也会和键值对保存在一起。key_value_pairs结构如下：</p>
+<p>​    不带过期时间的键值对结构如下：</p>
+<p>​     <img src="/2018/01/03/RDB文件结构/2018010402.png" alt="2018010402"></p>
+<p>​    带过期时间的键值对结构如下：</p>
+<p> <img src="/2018/01/03/RDB文件结构/2018010403.png" alt="2018010403"></p>
+<p>​    key_value_pair中key总是一个字符串对象，它的编码方式是REDIS_RDB_TYPE_STRING类型的</p>
+<p>​    value的编码：</p>
+<p>​        字符串对象：字符串对象的编码可以是REDIS_ENCODING_INT 或者 REDIS_ENCODING_RAW，如果是REDIS_ENCODING_INT 那么说明对象保存的是长度不超过32位的整数，REDIS_ENCODING_INT的值可以是REDIS_RDB_ENC_INT8、REDIS_RDB_ENC_INT16、REDIS_RDB_ENC_INT32,分别代表8位、16位、32位的整数值integer；如果是REDIS_ENCODING_RAW 那么说明对象保存的是一个字符串值，根据字符串长度的不同，有压缩和不压缩两种方法来保存这个字符串：如果字符串的长度小于等于20字节，那么这个字符串会直接被原样保存。如果字符串的长度大于20字节，那么这个字符串会被压缩之后再保存</p>
+<p>​    无压缩字符串保存结构如下：</p>
+<p>​         <img src="/2018/01/03/RDB文件结构/2018010404.png" alt="2018010404"></p>
+<p>​    被压缩后的字符串，保存结构如下：</p>
+<p> <img src="/2018/01/03/RDB文件结构/2018010405.png" alt="2018010405"></p>
+<p>​    REDIS_RDB_ENC_LZF 常量标志着字符串已经被LZF算法压缩过了，compressed_len记录的是字符串被压缩之后的长度，而origin_len记录的是字符串原来的长度，compressed_string记录的则是被压缩之后的字符串</p>
+<p>​        </p>
+<p>​    列表对象：TYPE的值为REDIS_RDB_TYPE_LIST，value保存的就是REDIS_ENCODING_LINKEDLIST编码的列表对象，结构如下图： <img src="/2018/01/03/RDB文件结构/2018010406.png" alt="2018010406"></p>
+<p>​        结构中的第一个数字3是列表的长度，之后跟着的分别是第一个列表项、第二个列表项和第三个列表项</p>
+<p>​            第一个列表项的长度为5，内容为字符串“hello”</p>
+<p>​    集合对象：TYPE的值为REDIS_RDB_TYPE_SET，value保存的就是一个REDIS_ENCODING_HT 编码的集合对象，RDB文件保存这种对象的结构如下： <img src="/2018/01/03/RDB文件结构/2018010407.png" alt="2018010407"></p>
+<p>结构中的第一个数字4记录了集合的大小，之后跟着的是集合的四个元素：</p>
+<p>​    第一个元素的长度为5，值为“apple”</p>
+<p>​    哈希表对象：TYPE的值为REDIS_RDB_TYPE_HASH，那么value 保存的就是一个REDIS_ENCODING_HT 编码的集合对象，RDB 文件保存的结构如下： <img src="/2018/01/03/RDB文件结构/2018010408.png" alt="2018010408"></p>
+<p>这个示例结构中，第一个数字2记录了哈希表的键值对数量，之后跟着的是两个键值对：</p>
+<p>​    第一个键值对的键的长度是1的字符串“a”，值是长度为5的字符串“apple”</p>
+<p>​    有序集合对象：TYPE的值为REDIS_RDB_TYPE_ZSET，value保存的是一个REDIS_ENCODING_SKIPLIST编码的有序集合对象，结构如下： <img src="/2018/01/03/RDB文件结构/2018010409.png" alt="2018010409"></p>
+<p>在这个示例结构中，第一个数字2记录了有序集合的元素数量，之后跟着的是两个有序集合元素：</p>
+<p>​    第一个元素的成员是长度为2的字符串“pi”，分值被转换成字符串之后变成了长度为4的字符串“3.14”</p>
+<p>​    INTSET编码集合：TYPE的值为REDIS_RDB_TYPE_SET_INTSET，那么value保存的就是一个整数集合对象，RDB文件保存这种对象的方法是，先将整数集合转换为字符串对象，然后将这个字符串对象保存到RDB文件里面</p>
+<p>如果程序读入RDB文件的过程中，碰到由整数集合对象转换成的字符串对象，那么程序会根据TYPE值的表示，先读入字符串对象，再将这个字符串对象转换成原来的整数集合对象</p>
+<p>​    ZIPLIST 编码的列表、哈希表或者有序集合：TYPE的值为 <code>REDIS_RDB_TYPE_LIST_ZIPLIST</code> 、 <code>REDIS_RDB_TYPE_HASH_ZIPLIST</code> 或者 REDIS_RDB_TYPE_ZSET_ZIPLIST ， 那么 <code>value</code> 保存的就是一个压缩列表对象， RDB 文件保存这种对象的方法是：</p>
 <ol>
-<li>在读取一个键之后（读和写操作都要对键进行读取），服务器会根据键是否存在，以此来更新服务器的键空间命中次数和键空间不命中次数，这两个值可以在INFO stats命令的keyspace_hits属性和keyspace_misses属性中查看</li>
-<li>在读取一个键之后，服务器会更新键的LRU（最后一次使用）时间，这个值可以用于计算键的闲置时间，使用命令OBJECT idletime命令可以查看键key的闲置时间</li>
-<li>如果服务器在读取一个键时，发现该键已经过期，那么服务器会先删除这个过期键，然后才执行余下的其他操作</li>
-<li>如果有客户端使用WATCH命令监视了某个键，那么服务器在对被监视的键进行修改之后，会将这个键标记为脏，从而让事物程序注意到这个键已经被修改过</li>
-<li>服务器每修改一个键之后，都会对脏键计数器的值增一，这个计数器会触发服务器的持久化以及复制操作执行</li>
-<li>如果服务器开启了数据库通知通知功能，那么在对键进行修改之后，服务器将按配置发送相应的数据库通知</li>
+<li>将压缩列表转换成一个字符串对象。</li>
+<li>将转换所得的字符串对象保存到 RDB 文件。</li>
 </ol>
+<p>如果程序在读入 RDB 文件的过程中， 碰到由压缩列表对象转换成的字符串对象， 那么程序会根据 <code>TYPE</code> 值的指示， 执行以下操作：</p>
+<ol>
+<li>读入字符串对象，并将它转换成原来的压缩列表对象。</li>
+<li>根据 <code>TYPE</code> 的值，设置压缩列表对象的类型： 如果 <code>TYPE</code> 的值为 <code>REDIS_RDB_TYPE_LIST_ZIPLIST</code> ， 那么压缩列表对象的类型为列表； 如果<code>TYPE</code> 的值为 <code>REDIS_RDB_TYPE_HASH_ZIPLIST</code> ， 那么压缩列表对象的类型为哈希表； 如果 <code>TYPE</code> 的值为 <code>REDIS_RDB_TYPE_ZSET_ZIPLIST</code> ， 那么压缩列表对象的类型为有序集合。</li>
+</ol>
+<p>从步骤 2 可以看出， 由于 <code>TYPE</code> 的存在， 即使列表、哈希表和有序集合三种类型都使用压缩列表来保存， RDB 读入程序也总可以将读入并转换之后得出的压缩列表设置成原来的类型。</p>
 
       
     </div>
@@ -423,8 +470,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/12/28/redis数据结构/" rel="next" title="redis数据结构">
-                <i class="fa fa-chevron-left"></i> redis数据结构
+              <a href="/2018/01/03/redis数据库/" rel="next" title="redis数据库结构和操作">
+                <i class="fa fa-chevron-left"></i> redis数据库结构和操作
               </a>
             
           </div>
@@ -432,10 +479,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/01/03/RDB文件结构/" rel="prev" title="RDB持久化">
-                RDB持久化 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -580,7 +623,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库结构"><span class="nav-number">1.</span> <span class="nav-text">数据库结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-操作"><span class="nav-number">2.</span> <span class="nav-text">Redis 操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#读取键空间时的维护操作"><span class="nav-number">3.</span> <span class="nav-text">读取键空间时的维护操作</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB文件的创建"><span class="nav-number">1.</span> <span class="nav-text">RDB文件的创建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-save和bgsave"><span class="nav-number">1.1.</span> <span class="nav-text">1.save和bgsave</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-自动间隔性保存"><span class="nav-number">1.2.</span> <span class="nav-text">2.自动间隔性保存</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB文件的载入"><span class="nav-number">2.</span> <span class="nav-text">RDB文件的载入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB文件的结构"><span class="nav-number">3.</span> <span class="nav-text">RDB文件的结构</span></a></li></ol></div>
             
 
           </div>
