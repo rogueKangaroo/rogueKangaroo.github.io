@@ -356,59 +356,16 @@
 
       
         
-          
-            <p>AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤</p>
+          <p>AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤</p>
 <h2 id="命令追加"><a href="#命令追加" class="headerlink" title="命令追加"></a>命令追加</h2><p>当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾：</p>
 <p>struct redisServer {</p>
-<p>// AOF缓冲区</p>
-<p>sds aof_buf;</p>
-<p>}</p>
-<p>举个例子，如果客户端向服务器发送以下命令：</p>
-<p>redis&gt; SET KEY VALUE</p>
-<p>OK</p>
-<p>那么服务器在执行这个SET命令之后，会将以下协议内容追加到 aof_buf 缓冲区的末尾：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*3\r\n$3\r\nSET\r\n$3\r\nKEY\r\n$5\r\nVALUE\r\n</span><br></pre></td></tr></table></figure>
-<h2 id="AOF文件的写入与同步"><a href="#AOF文件的写入与同步" class="headerlink" title="AOF文件的写入与同步"></a>AOF文件的写入与同步</h2><p>Redis 的服务器进程就是一个事件循环，这个循环中的文件事件负责接受客户端的命令请求，以及向客户端发送命令回复，而时间事件则负责执行像 serverCron 函数这样需要定时运行的函数</p>
-<p>服务器在处理文件事件时可能会执行写命令，使得一些内容被追加到aof_buf 缓存区里面，在服务器每次结束一个事件循环之前，她都会调用 flushAppendOnlyFile 函数，考虑是否需要将 aof_buf 缓冲区中的内容写入和保存到 AOF文件里面，这个过程可以用一下伪代码表示：</p>
-<p>def eventLoop():</p>
-<p>​    while True:</p>
-<p>​        // 处理文件事件，接收命令请求以及发送命令回复</p>
-<p>​        // 处理命令请求时可能会有新内容被追加到aof_buf 缓冲区中</p>
-<p>​        processFileEvents()</p>
-<p>​        // 处理时间事件</p>
-<p>​        processTimeEvents()</p>
-<p>​        // 考虑是否要将 aof_buf 中的内容写入和保存到 AOF 文件里面</p>
-<p>​        flushAppendOnlyFile()</p>
-<p><code>flushAppendOnlyFile</code> 函数的行为由服务器配置的 <code>appendfsync</code> 选项的值来决定， 各个不同值产生的行为如表 TABLE_APPENDFSYNC 所示。</p>
-<table>
-<thead>
-<tr>
-<th><code>appendfsync</code> 选项的值</th>
-<th><code>flushAppendOnlyFile</code> 函数的行为</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>always</code></td>
-<td>将 <code>aof_buf</code> 缓冲区中的所有内容写入并同步到 AOF 文件。</td>
-</tr>
-<tr>
-<td><code>everysec</code></td>
-<td>将 <code>aof_buf</code> 缓冲区中的所有内容写入到 AOF 文件， 如果上次同步 AOF 文件的时间距离现在超过一秒钟， 那么再次对 AOF 文件进行同步， 并且这个同步操作是由一个线程专门负责执行的。</td>
-</tr>
-<tr>
-<td><code>no</code></td>
-<td>将 <code>aof_buf</code> 缓冲区中的所有内容写入到 AOF 文件， 但并不对 AOF 文件进行同步， 何时同步由操作系统来决定。</td>
-</tr>
-</tbody>
-</table>
-<p>如果用户没有主动为 <code>appendfsync</code> 选项设置值， 那么 <code>appendfsync</code> 选项的默认值为 <code>everysec</code> </p>
-<p>当 <code>appendfsync</code> 的值为 <code>always</code> 时， 服务器在每个事件循环都要将 <code>aof_buf</code> 缓冲区中的所有内容写入到 AOF 文件， 并且同步 AOF 文件， 所以 <code>always</code> 的效率是 <code>appendfsync</code> 选项三个值当中最慢的一个， 但从安全性来说， <code>always</code> 也是最安全的， 因为即使出现故障停机， AOF 持久化也只会丢失一个事件循环中所产生的命令数据。</p>
-<p>当 <code>appendfsync</code> 的值为 <code>everysec</code> 时， 服务器在每个事件循环都要将 <code>aof_buf</code> 缓冲区中的所有内容写入到 AOF 文件， 并且每隔超过一秒就要在子线程中对 AOF 文件进行一次同步： 从效率上来讲， <code>everysec</code> 模式足够快， 并且就算出现故障停机， 数据库也只丢失一秒钟的命令数据。</p>
-<p>当 <code>appendfsync</code> 的值为 <code>no</code> 时， 服务器在每个事件循环都要将 <code>aof_buf</code> 缓冲区中的所有内容写入到 AOF 文件， 至于何时对 AOF 文件进行同步， 则由操作系统控制。</p>
-<p>在执行BGREWRITEAOF命令时，Redis 服务器会维护一个 AOF 重写缓冲区，该缓冲区会在子进程创建新 AOF 文件的期间记录服务期执行的所有写命令。当子进程完成创建新 AOF 文件的工作之后，服务器会将重写缓冲区中的所有内容追加到新 AOF 文件的末尾，使得新旧两个AOF文件所保存的数据库状态一致。最后，服务器用新的AOF文件替换旧的AOF文件，以此来完成AOF文件重写操作。</p>
-
-          
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2018/01/04/AOF持久化/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>

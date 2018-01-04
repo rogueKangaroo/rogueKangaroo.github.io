@@ -81,18 +81,18 @@
 
 
 
-<meta name="description" content="AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤 命令追加当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾： struct redisServer { // AOF缓冲区 sds aof_buf; } 举个例子，">
+<meta name="description" content="AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤 命令追加当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾： struct redisServer {">
 <meta name="keywords" content="源码,redis">
 <meta property="og:type" content="article">
 <meta property="og:title" content="AOF持久化">
 <meta property="og:url" content="http://yoursite.com/2018/01/04/AOF持久化/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤 命令追加当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾： struct redisServer { // AOF缓冲区 sds aof_buf; } 举个例子，如果客户端向服务器发送以下命令： redis&amp;gt; SET KEY VALUE">
+<meta property="og:description" content="AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤 命令追加当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾： struct redisServer {">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-04T08:55:16.000Z">
+<meta property="og:updated_time" content="2018-01-04T08:59:07.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="AOF持久化">
-<meta name="twitter:description" content="AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤 命令追加当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾： struct redisServer { // AOF缓冲区 sds aof_buf; } 举个例子，如果客户端向服务器发送以下命令： redis&amp;gt; SET KEY VALUE">
+<meta name="twitter:description" content="AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤 命令追加当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾： struct redisServer {">
 
 
 
@@ -357,6 +357,7 @@
         <p>AOF 持久化功能的实现可以分为命令追加、文件写入、文件同步三个步骤</p>
 <h2 id="命令追加"><a href="#命令追加" class="headerlink" title="命令追加"></a>命令追加</h2><p>当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的命令追加到服务器状态的aof_buf 缓冲区的末尾：</p>
 <p>struct redisServer {</p>
+<a id="more"></a>
 <p>// AOF缓冲区</p>
 <p>sds aof_buf;</p>
 <p>}</p>
