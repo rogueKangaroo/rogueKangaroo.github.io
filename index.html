@@ -1016,157 +1016,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--jstack及dump文件分析/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="刘凯召">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/headimg.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="有态度">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/11/30/2017-11-30--jstack及dump文件分析/" itemprop="url">jstack及dump文件分析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:50:00+08:00">
-                2017-11-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/调优/" itemprop="url" rel="index">
-                    <span itemprop="name">调优</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>jstack命令的用法为jstack pid</p>
-<p>jstack在jdk/bin的目录下</p>
-<p>在实际运行中，建议产生3次以上的dump文件，每次间隔10s左右，文件一起分析来能定位问题，不要拿一次的dump文件来分析问题，没有什么参考性。</p>
-<p>dump文件中的线程状态值有：</p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/11/30/2017-11-30--jstack及dump文件分析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-  
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <!-- <div class="post-eof"></div> -->
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1315,7 +1164,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--jstack及dump文件分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -1334,7 +1183,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/30/2017-11-30--spring-aop源码分析/" itemprop="url">spring aop源码分析</a></h1>
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--jstack及dump文件分析/" itemprop="url">jstack及dump文件分析</a></h1>
         
 
         <div class="post-meta">
@@ -1346,7 +1195,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:00:00+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:50:00+08:00">
                 2017-11-30
               </time>
             
@@ -1369,8 +1218,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/源码/" itemprop="url" rel="index">
-                    <span itemprop="name">源码</span>
+                  <a href="/categories/调优/" itemprop="url" rel="index">
+                    <span itemprop="name">调优</span>
                   </a>
                 </span>
 
@@ -1407,13 +1256,13 @@
 
       
         
-          <p>源码分析：</p>
-<p>这里先描述aop的具体流程：</p>
-<p>一、解析xml</p>
-<p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p>
+          <p>jstack命令的用法为jstack pid</p>
+<p>jstack在jdk/bin的目录下</p>
+<p>在实际运行中，建议产生3次以上的dump文件，每次间隔10s左右，文件一起分析来能定位问题，不要拿一次的dump文件来分析问题，没有什么参考性。</p>
+<p>dump文件中的线程状态值有：</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/11/30/2017-11-30--spring-aop源码分析/#more" rel="contents">
+            <a class="btn" href="/2017/11/30/2017-11-30--jstack及dump文件分析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1618,7 +1467,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -1637,7 +1486,158 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/30/2017-11-30--LinkedList源码分析/" itemprop="url">LinkedList源码分析</a></h1>
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--spring-aop源码分析/" itemprop="url">spring aop源码分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T11:00:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>源码分析：</p>
+<p>这里先描述aop的具体流程：</p>
+<p>一、解析xml</p>
+<p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--spring-aop源码分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--ArrayList源码分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--ArrayList源码分析/" itemprop="url">ArrayList源码分析</a></h1>
         
 
         <div class="post-meta">
@@ -1710,17 +1710,17 @@
 
       
         
-          <p>LinkedList的基本存储结构是链表</p>
-<p>LinkedList的节点元素的存储结构为：</p>
-<pre><code>`private static class Node&lt;E&gt;{`
+          <p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
 
-     E item;
+     ensureCapacityInternal(size +1);
 
-     Node&lt;E&gt; next;
+     elementData[size++]==e;
 </code></pre>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/11/30/2017-11-30--LinkedList源码分析/#more" rel="contents">
+            <a class="btn" href="/2017/11/30/2017-11-30--ArrayList源码分析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
