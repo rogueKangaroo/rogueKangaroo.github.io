@@ -8,7 +8,7 @@
       <content type="html"><![CDATA[<h2 id="描述符解释"><a href="#描述符解释" class="headerlink" title="描述符解释"></a>描述符解释</h2><p>文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。</p>
 <p>程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。</p>
 <a id="more"></a>
-<p>如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话</p>
+<p>如果此时去打开一个新的文件，它的文件描述符会是3,POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话</p>
 <table>
 <thead>
 <tr>
@@ -864,6 +864,72 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[spring aop源码分析]]></title>
       <url>/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>源码分析：</p>
@@ -1174,72 +1240,6 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
             <tag> 源码 </tag>
             
             <tag> spring </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
-</code></pre><a id="more"></a>
-<pre><code>        return true;
-
-    }
-
-    if (anObject instanceof String) {
-
-        String anotherString = (String) anObject;
-
-        int n = value.length;
-
-        if (n == anotherString.value.length) {
-
-            char v1[] = value;
-
-            char v2[] = anotherString.value;
-
-            int i = 0;
-
-            while (n-- != 0) {
-
-                if (v1[i] != v2[i])
-
-                        return false;
-
-                i++;
-
-            }
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-`}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
             
         </tags>
         
