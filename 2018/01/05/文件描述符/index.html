@@ -81,19 +81,19 @@
 
 
 
-<meta name="description" content="描述符解释文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。 程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包">
+<meta name="description" content="描述符解释文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。 程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。">
 <meta name="keywords" content="系统，描述符">
 <meta property="og:type" content="article">
 <meta property="og:title" content="文件描述符">
 <meta property="og:url" content="http://yoursite.com/2018/01/05/文件描述符/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="描述符解释文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。 程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程">
+<meta property="og:description" content="描述符解释文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。 程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2018/01/05/文件描述符/屏幕快照%202018-01-05%20下午5.16.25.png">
-<meta property="og:updated_time" content="2018-01-05T09:43:30.000Z">
+<meta property="og:updated_time" content="2018-01-05T09:45:00.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="文件描述符">
-<meta name="twitter:description" content="描述符解释文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。 程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程">
+<meta name="twitter:description" content="描述符解释文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。 程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。">
 <meta name="twitter:image" content="http://yoursite.com/2018/01/05/文件描述符/屏幕快照%202018-01-05%20下午5.16.25.png">
 
 
@@ -357,7 +357,9 @@
 
       
         <h2 id="描述符解释"><a href="#描述符解释" class="headerlink" title="描述符解释"></a>描述符解释</h2><p>文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。</p>
-<p>程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话</p>
+<p>程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。</p>
+<a id="more"></a>
+<p>如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话</p>
 <table>
 <thead>
 <tr>
