@@ -567,7 +567,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--ArrayList源码分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -586,7 +586,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/30/2017-11-30--LinkedList源码分析/" itemprop="url">LinkedList源码分析</a></h1>
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--ArrayList源码分析/" itemprop="url">ArrayList源码分析</a></h1>
         
 
         <div class="post-meta">
@@ -659,17 +659,17 @@
 
       
         
-          <p>LinkedList的基本存储结构是链表</p>
-<p>LinkedList的节点元素的存储结构为：</p>
-<pre><code>`private static class Node&lt;E&gt;{`
+          <p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
 
-     E item;
+     ensureCapacityInternal(size +1);
 
-     Node&lt;E&gt; next;
+     elementData[size++]==e;
 </code></pre>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/11/30/2017-11-30--LinkedList源码分析/#more" rel="contents">
+            <a class="btn" href="/2017/11/30/2017-11-30--ArrayList源码分析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -875,7 +875,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--ArrayList源码分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -894,7 +894,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/30/2017-11-30--ArrayList源码分析/" itemprop="url">ArrayList源码分析</a></h1>
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--LinkedList源码分析/" itemprop="url">LinkedList源码分析</a></h1>
         
 
         <div class="post-meta">
@@ -967,17 +967,17 @@
 
       
         
-          <p>ArrayList的基本存储数据结构为数组</p>
-<p><code>ArrayList 的add源码为：</code></p>
-<pre><code>public boolean add(E e){
+          <p>LinkedList的基本存储结构是链表</p>
+<p>LinkedList的节点元素的存储结构为：</p>
+<pre><code>`private static class Node&lt;E&gt;{`
 
-     ensureCapacityInternal(size +1);
+     E item;
 
-     elementData[size++]==e;
+     Node&lt;E&gt; next;
 </code></pre>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/11/30/2017-11-30--ArrayList源码分析/#more" rel="contents">
+            <a class="btn" href="/2017/11/30/2017-11-30--LinkedList源码分析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1243,7 +1243,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-count">16</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
