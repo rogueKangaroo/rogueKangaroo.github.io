@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-01-05T09:45:00.000Z</updated>
+  <updated>2018-01-05T09:47:23.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="http://yoursite.com/2018/01/05/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/"/>
     <id>http://yoursite.com/2018/01/05/文件描述符/</id>
     <published>2018-01-05T08:20:31.000Z</published>
-    <updated>2018-01-05T09:45:00.000Z</updated>
+    <updated>2018-01-05T09:47:23.000Z</updated>
     
     <content type="html"><![CDATA[<h2 id="描述符解释"><a href="#描述符解释" class="headerlink" title="描述符解释"></a>描述符解释</h2><p>文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。</p><p>程序刚刚启动时，0是标准输入，1是标准输出，2是标准错误。</p><a id="more"></a><p>如果此时去打开一个新的文件，它的文件描述符会是3.POSIX标准要求每次打开文件时（包括socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话</p><table><thead><tr><th style="text-align:center">文件描述符</th><th style="text-align:center">用途</th><th style="text-align:center">POSIX名称</th><th style="text-align:center">stdio流</th></tr></thead><tbody><tr><td style="text-align:center">0</td><td style="text-align:center">标准输入</td><td style="text-align:center">STDIN_FILENO</td><td style="text-align:center">stdin</td></tr><tr><td style="text-align:center">1</td><td style="text-align:center">标准输出</td><td style="text-align:center">STDOUT_FILENO</td><td style="text-align:center">stdout</td></tr><tr><td style="text-align:center">2</td><td style="text-align:center">标准错误</td><td style="text-align:center">STDERR_FILENO</td><td style="text-align:center">stderr</td></tr></tbody></table><h2 id="文件描述符与打开文件之间的关系"><a href="#文件描述符与打开文件之间的关系" class="headerlink" title="文件描述符与打开文件之间的关系"></a>文件描述符与打开文件之间的关系</h2><p>一个进程建立，会在进程表中建立对应的项，而这个进程项下包含了一个文件描述符表，在该进程中打开的文件描述符都会保存在这里。</p><p>一个进程打开一个文件，则会在文件描述符表、系统文件表、内存索引结点表中建立一些对应关系</p><p> <img src="/2018/01/05/文件描述符/屏幕快照 2018-01-05 下午5.16.25.png" alt="屏幕快照 2018-01-05 下午5.16.25"></p><p>进程A和进程B打开同一个文件（i-node 1976）,实际上两个不相干的进程打开同一个文件时，内核会在系统文件表中新建不同的项指向相同的内存索引节点，这时进程A和进程B的IO操作都是相对独立的互不影响，所以在实际操作时多个不同进程对同一个文件进行操作时会造成不同的读写操作被覆盖的情况</p><p>socket在进程中同样是一个文件描述符，但它是一个特殊文件类型，跟文件不一样，它不能通过一个具体路径去访问。</p><p>这里解释一下“惊群”,多个进程监听同一个socket ( fork可以实现多个进程监听同一个socket )，一开始多个进程同时在accept处阻塞，当有一个连接进入，多个进程同时被唤醒，去抢占accept到的资源，这个现象叫“惊群”。但是只有一个进程能成功accept，而不会同时有多个进程能拿到该连接对象，操作系统保证上述操作的安全性</p><p>参考链接：</p><p><a href="http://ju.outofmemory.cn/entry/104872" target="_blank" rel="noopener">http://ju.outofmemory.cn/entry/104872</a></p><p><a href="http://blog.csdn.net/cywosp/article/details/38965239" target="_blank" rel="noopener">http://blog.csdn.net/cywosp/article/details/38965239</a></p>]]></content>
     
@@ -35,7 +35,7 @@
       <category term="系统" scheme="http://yoursite.com/categories/%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="系统，描述符" scheme="http://yoursite.com/tags/%E7%B3%BB%E7%BB%9F%EF%BC%8C%E6%8F%8F%E8%BF%B0%E7%AC%A6/"/>
+      <category term="系统 ，描述符" scheme="http://yoursite.com/tags/%E7%B3%BB%E7%BB%9F-%EF%BC%8C%E6%8F%8F%E8%BF%B0%E7%AC%A6/"/>
     
   </entry>
   
