@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-01-04T08:59:07.000Z</updated>
+  <updated>2018-01-05T07:38:54.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,32 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>SO_RCVLOWAT和SO_SNDLOWAT说明</title>
+    <link href="http://yoursite.com/2018/01/05/SO-RCVLOWAT%E5%92%8CSO-SNDLOWAT%E8%AF%B4%E6%98%8E/"/>
+    <id>http://yoursite.com/2018/01/05/SO-RCVLOWAT和SO-SNDLOWAT说明/</id>
+    <published>2018-01-05T07:12:23.000Z</published>
+    <updated>2018-01-05T07:38:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="SO-RCVLOWAT-和-SO-SNDLOWAT定义"><a href="#SO-RCVLOWAT-和-SO-SNDLOWAT定义" class="headerlink" title="SO_RCVLOWAT 和 SO_SNDLOWAT定义"></a>SO_RCVLOWAT 和 SO_SNDLOWAT定义</h2><p>每个套接口（socket）都有一个接收低潮限度和一个发送低潮限度</p><p>接收低潮限度：对于TCP套接口而言，接收缓冲区中的数据必须达到规定数量，内核才通知进程“可读”。比如触发select或者epoll,返回套接口可读</p><p>发送低潮限度：对于TCP套接口而言，发送缓冲区中的空闲空间（可以写入数据的空间）大于低水位标记，系统才通知程</p><a id="more"></a><p>序可以往该socket上写入数据</p><p>对于接收低潮限度的理解：如果应用程序没有调用recv()去读取socket的接受缓冲区的数据，则接受缓冲区数据将一直保存在接受缓存区中，所以随着接受缓冲区接受到更多发送端发送缓冲区中的数据，则肯定会导致接受缓冲区溢出，所以设置一个接受低潮限度，当epoll监听到某一个socket的接收缓冲区的数据超过了接收低潮限度，则触发读就绪，使得epoll循环返回，开始处理I/O事件。</p><p>接收低潮限度：默认为1字节</p><p>对于发送低潮限度：如果应用程序没有调用send()来copy应用程序buff中的数据到socket发送缓冲区中，则随着发送缓冲区的数据被内核通过tcp协议发送出去，最后socket发送缓冲区的数据越来越少，可用的剩余空间越来越多，最后超过发送缓冲区的发送低潮限度，则epoll监听到这个socket可写，使得epoll循环返回，开始处理写I/O事件。</p><p>发送低潮限度：默认为2048字节</p><p>文中的epoll会在其他博客中解读</p><p>参考链接：<a href="http://blog.csdn.net/yygydjkthh/article/details/46853023" target="_blank" rel="noopener">http://blog.csdn.net/yygydjkthh/article/details/46853023</a></p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;SO-RCVLOWAT-和-SO-SNDLOWAT定义&quot;&gt;&lt;a href=&quot;#SO-RCVLOWAT-和-SO-SNDLOWAT定义&quot; class=&quot;headerlink&quot; title=&quot;SO_RCVLOWAT 和 SO_SNDLOWAT定义&quot;&gt;&lt;/a&gt;SO_RCVLOWAT 和 SO_SNDLOWAT定义&lt;/h2&gt;&lt;p&gt;每个套接口（socket）都有一个接收低潮限度和一个发送低潮限度&lt;/p&gt;
+&lt;p&gt;接收低潮限度：对于TCP套接口而言，接收缓冲区中的数据必须达到规定数量，内核才通知进程“可读”。比如触发select或者epoll,返回套接口可读&lt;/p&gt;
+&lt;p&gt;发送低潮限度：对于TCP套接口而言，发送缓冲区中的空闲空间（可以写入数据的空间）大于低水位标记，系统才通知程&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="网络" scheme="http://yoursite.com/categories/%E7%BD%91%E7%BB%9C/"/>
+    
+    
+      <category term="socket" scheme="http://yoursite.com/tags/socket/"/>
+    
+      <category term="套接口" scheme="http://yoursite.com/tags/%E5%A5%97%E6%8E%A5%E5%8F%A3/"/>
+    
+  </entry>
   
   <entry>
     <title>AOF持久化</title>
@@ -279,35 +305,6 @@
   </entry>
   
   <entry>
-    <title>hashMap源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/</id>
-    <published>2017-11-30T02:30:00.000Z</published>
-    <updated>2017-11-30T03:24:20.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p><p>hashMap就是数组加链表的存储结构。</p><p>put源码：</p><p><code>public V put(K key, V value) {</code></p><pre><code>if (table == EMPTY_TABLE) {</code></pre><a id="more"></a><pre><code>        inflateTable(threshold);    }    if (key == null)        return putForNullKey(value);    int hash = hash(key);    int i = indexFor(hash, table.length);    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {        Object k;        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {            V oldValue = e.value;            e.value = value;            e.recordAccess(this);            return oldValue;        }    }    modCount++;    addEntry(hash, key, value, i);    return null;`}`</code></pre><p>根据每个key进行hash,hash的源码如下：</p><pre><code>`final int hash(Object k) {`    int h = hashSeed;    if (0 != h &amp;&amp; k instanceof String) {        return sun.misc.Hashing.stringHash32((String) k);    }    h ^= k.hashCode();    // This function ensures that hashCodes that differ only by    // constant multiples at each bit position have a bounded    // number of collisions (approximately 8 at default load factor).    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);`}`</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p><pre><code>`void transfer(Entry[] newTable, boolean rehash) {`    int newCapacity = newTable.length;    for (Entry&lt;K,V&gt; e : table) {        while(null != e) {            Entry&lt;K,V&gt; next = e.next;            if (rehash) {                e.hash = null == e.key ? 0 : hash(e.key);            }            int i = indexFor(e.hash, newCapacity);            e.next = newTable[i];            newTable[i] = e;            e = next;        }    }`}`</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p><p>以上中的Entry的结构是：</p><p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p><pre><code>final K key;V value;Entry&lt;K,V&gt; next;int hash;</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p><pre><code>    value = v;    next = n;    key = k;    hash = h;}</code></pre><p><code>}</code></p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;java基本存储结构：数组和链表&lt;/p&gt;
-&lt;p&gt;hashMap就是数组加链表的存储结构。&lt;/p&gt;
-&lt;p&gt;put源码：&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;public V put(K key, V value) {&lt;/code&gt;&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;if (table == EMPTY_TABLE) {
-&lt;/code&gt;&lt;/pre&gt;
-    
-    </summary>
-    
-      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
-    
-    
-      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-      <category term="hashMap" scheme="http://yoursite.com/tags/hashMap/"/>
-    
-  </entry>
-  
-  <entry>
     <title>LinkedList源码分析</title>
     <link href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
     <id>http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/</id>
@@ -366,6 +363,35 @@
       <category term="java" scheme="http://yoursite.com/tags/java/"/>
     
       <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>hashMap源码分析</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/</id>
+    <published>2017-11-30T02:30:00.000Z</published>
+    <updated>2017-11-30T03:24:20.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p><p>hashMap就是数组加链表的存储结构。</p><p>put源码：</p><p><code>public V put(K key, V value) {</code></p><pre><code>if (table == EMPTY_TABLE) {</code></pre><a id="more"></a><pre><code>        inflateTable(threshold);    }    if (key == null)        return putForNullKey(value);    int hash = hash(key);    int i = indexFor(hash, table.length);    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {        Object k;        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {            V oldValue = e.value;            e.value = value;            e.recordAccess(this);            return oldValue;        }    }    modCount++;    addEntry(hash, key, value, i);    return null;`}`</code></pre><p>根据每个key进行hash,hash的源码如下：</p><pre><code>`final int hash(Object k) {`    int h = hashSeed;    if (0 != h &amp;&amp; k instanceof String) {        return sun.misc.Hashing.stringHash32((String) k);    }    h ^= k.hashCode();    // This function ensures that hashCodes that differ only by    // constant multiples at each bit position have a bounded    // number of collisions (approximately 8 at default load factor).    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);`}`</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p><pre><code>`void transfer(Entry[] newTable, boolean rehash) {`    int newCapacity = newTable.length;    for (Entry&lt;K,V&gt; e : table) {        while(null != e) {            Entry&lt;K,V&gt; next = e.next;            if (rehash) {                e.hash = null == e.key ? 0 : hash(e.key);            }            int i = indexFor(e.hash, newCapacity);            e.next = newTable[i];            newTable[i] = e;            e = next;        }    }`}`</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p><p>以上中的Entry的结构是：</p><p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p><pre><code>final K key;V value;Entry&lt;K,V&gt; next;int hash;</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p><pre><code>    value = v;    next = n;    key = k;    hash = h;}</code></pre><p><code>}</code></p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;java基本存储结构：数组和链表&lt;/p&gt;
+&lt;p&gt;hashMap就是数组加链表的存储结构。&lt;/p&gt;
+&lt;p&gt;put源码：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;public V put(K key, V value) {&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;if (table == EMPTY_TABLE) {
+&lt;/code&gt;&lt;/pre&gt;
+    
+    </summary>
+    
+      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
+    
+    
+      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
+    
+      <category term="hashMap" scheme="http://yoursite.com/tags/hashMap/"/>
     
   </entry>
   
