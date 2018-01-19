@@ -3,6 +3,55 @@
   
     
     <entry>
+      <title><![CDATA[IO模型解读]]></title>
+      <url>/2018/01/08/IO%E6%A8%A1%E5%9E%8B%E8%A7%A3%E8%AF%BB/</url>
+      <content type="html"><![CDATA[<h2 id="IO模型分类"><a href="#IO模型分类" class="headerlink" title="IO模型分类"></a>IO模型分类</h2><p>对于一个network IO（以read为例），它会涉及到两个系统对象，一个是调用这个IO的process(or thread)，另一个就是系统内核（kernel）。当一个read操作发生时，它会经历两个阶段：（1）等待数据准备（2）将数据从内核拷贝到进程中</p>
+<ol>
+<li><p>同步阻塞IO：</p>
+<a id="more"></a>
+<p>​    在linux中，默认情况下所有socket都是blocking，当用户进程调用read的系统调用，kernel就开始了IO的第一个阶段：准备数据。对于network IO来说，很多时候数据在一开始还没到达（比如，还没收到一个完整的UDP包），这时候kernel就要等待足够的数据到来，而在用户进程这边，整个进程会被阻塞（因为调用没有回应，进程在等待回应）。当kernel一直等待的数据准备好了，它就会将数据从kernel中拷贝到用户内存，然后kernel返回结果，用户进程解除block的状态，继续运行。</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午3.57.18.png" alt="屏幕快照 2018-01-19 下午3.57.18"></p>
+</li>
+<li><p>同步非阻塞IO:</p>
+<p>​    在linux下，可以通过设置socket使其变成non-blocking。当用户进程发起read操作时，如果kernel中的数据还没准备好，那么它并没有block用户进程，而是立刻返回一个error。从用户进程角度来看，它发起了一个read操作，并不需要等待，而是马上就有一个结果。用户进程判断结果是一个error时，它就知道数据还没准备好，于是它可以再次发送read操作。一旦kernel中的数据准备好了，并且又再次收到了用户进程的system call,那么它马上就将数据拷贝到用户内存，然后返回。所以这种模型下，用户进程其实是需要不断的主动询问kernel数据准备好了没有</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午3.57.30.png" alt="屏幕快照 2018-01-19 下午3.57.30"></p>
+</li>
+<li><p>IO多路复用：</p>
+<p>​    该IO模型是基于select/epoll的。当用户进程调用了select，那么整个进程会被block，而同时kernel会“监视”所有select负责的socket，当任何一个socket中的数据准备好了，select就会返回。这个时候用户进程再调用read操作，将数据从kernel拷贝到用户进程。这个模型跟blocking IO相比：如果处理的连接数不是很高的话，使用select/epoll的web server不一定比使用multi-threading + blocking IO的web server性能更好，因为select/epoll是需要使用两个system call( select + read)，而blocking IO只调用一个system call(read)。select/epoll 的优势并不是对于单个连接能处理的更快，而是在于能处理更多的连接。</p>
+<p>​    IO多路复用中，每个socket，一般都设置成为non-blocking,但是，用户process还是被阻塞的，只不过是被select函数block的。 <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午3.57.39.png" alt="屏幕快照 2018-01-19 下午3.57.39"></p>
+<p>​    IO多路复用一般都会和Reactor设计模式配合使用，这样用户process只注册自己感兴趣的socket或者IO请求，然后去做自己的事情，等到数据到来时再进行处理，则可以提高CPU的利用率</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午4.10.11.png" alt="屏幕快照 2018-01-19 下午4.10.11"></p>
+</li>
+<li><p>异步IO：</p>
+<p>用户process发起read操作，即向kernel发送一个asynchronous read之后，会立刻收到内核的返回值。然后kernel等数据准备好，会将数据拷贝到用户内存，当这一切完成后，kernel会给用户进程发送一个signal，告知用户process read操作完成了。</p>
+<p>异步IO需要操作系统的支持，且是与Proactor设计模式配合使用的</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午4.20.32.png" alt="屏幕快照 2018-01-19 下午4.20.32"></p>
+<p>​</p>
+<p>​</p>
+<p>参考链接：</p>
+<p><a href="http://www.cnblogs.com/fanzhidongyzby/p/4098546.html" target="_blank" rel="noopener">http://www.cnblogs.com/fanzhidongyzby/p/4098546.html</a></p>
+</li>
+</ol>
+]]></content>
+      
+        <categories>
+            
+            <category> IO </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> IO </tag>
+            
+            <tag> 系统 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[文件描述符]]></title>
       <url>/2018/01/05/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</url>
       <content type="html"><![CDATA[<h2 id="描述符解释"><a href="#描述符解释" class="headerlink" title="描述符解释"></a>描述符解释</h2><p>文件描述符（句柄）是内核为了高效管理已被打开的文件所创建的索引，是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。</p>
@@ -712,34 +761,6 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[JVM内存模型]]></title>
-      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
-      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
-<a id="more"></a>
-<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
-<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
-<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
-<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
-<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
-<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
-]]></content>
-      
-        <categories>
-            
-            <category> JVM </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> JVM </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[jstack及dump文件分析]]></title>
       <url>/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>jstack命令的用法为jstack pid</p>
@@ -864,66 +885,28 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
-</code></pre><a id="more"></a>
-<pre><code>        return true;
-
-    }
-
-    if (anObject instanceof String) {
-
-        String anotherString = (String) anObject;
-
-        int n = value.length;
-
-        if (n == anotherString.value.length) {
-
-            char v1[] = value;
-
-            char v2[] = anotherString.value;
-
-            int i = 0;
-
-            while (n-- != 0) {
-
-                if (v1[i] != v2[i])
-
-                        return false;
-
-                i++;
-
-            }
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-`}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+      <title><![CDATA[JVM内存模型]]></title>
+      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
+      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+<a id="more"></a>
+<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
+<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
+<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
+<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
+<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
+<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
 ]]></content>
       
         <categories>
             
-            <category> 源码 </category>
+            <category> JVM </category>
             
         </categories>
         
         
         <tags>
             
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
+            <tag> JVM </tag>
             
         </tags>
         
@@ -1240,6 +1223,72 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
             <tag> 源码 </tag>
             
             <tag> spring </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
             
         </tags>
         

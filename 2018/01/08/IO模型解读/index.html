@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/favicon.ico?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="IO,系统," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="有态度" type="application/atom+xml" />
+
+
+
+
+
+
+<meta name="description" content="IO模型分类对于一个network IO（以read为例），它会涉及到两个系统对象，一个是调用这个IO的process(or thread)，另一个就是系统内核（kernel）。当一个read操作发生时，它会经历两个阶段：（1）等待数据准备（2）将数据从内核拷贝到进程中  同步阻塞IO：">
+<meta name="keywords" content="IO,系统">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IO模型解读">
+<meta property="og:url" content="http://yoursite.com/2018/01/08/IO模型解读/index.html">
+<meta property="og:site_name" content="有态度">
+<meta property="og:description" content="IO模型分类对于一个network IO（以read为例），它会涉及到两个系统对象，一个是调用这个IO的process(or thread)，另一个就是系统内核（kernel）。当一个read操作发生时，它会经历两个阶段：（1）等待数据准备（2）将数据从内核拷贝到进程中  同步阻塞IO：">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/01/08/IO模型解读/屏幕快照%202018-01-19%20下午3.57.18.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/08/IO模型解读/屏幕快照%202018-01-19%20下午3.57.30.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/08/IO模型解读/屏幕快照%202018-01-19%20下午3.57.39.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/08/IO模型解读/屏幕快照%202018-01-19%20下午4.10.11.png">
+<meta property="og:image" content="http://yoursite.com/2018/01/08/IO模型解读/屏幕快照%202018-01-19%20下午4.20.32.png">
+<meta property="og:updated_time" content="2018-01-19T08:24:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="IO模型解读">
+<meta name="twitter:description" content="IO模型分类对于一个network IO（以read为例），它会涉及到两个系统对象，一个是调用这个IO的process(or thread)，另一个就是系统内核（kernel）。当一个read操作发生时，它会经历两个阶段：（1）等待数据准备（2）将数据从内核拷贝到进程中  同步阻塞IO：">
+<meta name="twitter:image" content="http://yoursite.com/2018/01/08/IO模型解读/屏幕快照%202018-01-19%20下午3.57.18.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/08/IO模型解读/"/>
+
+
+
+
+
+  <title>IO模型解读 | 有态度</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">有态度</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">阅读，学习，思考，写作，独立</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-bars"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/08/IO模型解读/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">IO模型解读</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-08T14:59:29+08:00">
+                2018-01-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/IO/" itemprop="url" rel="index">
+                    <span itemprop="name">IO</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="IO模型分类"><a href="#IO模型分类" class="headerlink" title="IO模型分类"></a>IO模型分类</h2><p>对于一个network IO（以read为例），它会涉及到两个系统对象，一个是调用这个IO的process(or thread)，另一个就是系统内核（kernel）。当一个read操作发生时，它会经历两个阶段：（1）等待数据准备（2）将数据从内核拷贝到进程中</p>
+<ol>
+<li><p>同步阻塞IO：</p>
+<a id="more"></a>
+<p>​    在linux中，默认情况下所有socket都是blocking，当用户进程调用read的系统调用，kernel就开始了IO的第一个阶段：准备数据。对于network IO来说，很多时候数据在一开始还没到达（比如，还没收到一个完整的UDP包），这时候kernel就要等待足够的数据到来，而在用户进程这边，整个进程会被阻塞（因为调用没有回应，进程在等待回应）。当kernel一直等待的数据准备好了，它就会将数据从kernel中拷贝到用户内存，然后kernel返回结果，用户进程解除block的状态，继续运行。</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午3.57.18.png" alt="屏幕快照 2018-01-19 下午3.57.18"></p>
+</li>
+<li><p>同步非阻塞IO:</p>
+<p>​    在linux下，可以通过设置socket使其变成non-blocking。当用户进程发起read操作时，如果kernel中的数据还没准备好，那么它并没有block用户进程，而是立刻返回一个error。从用户进程角度来看，它发起了一个read操作，并不需要等待，而是马上就有一个结果。用户进程判断结果是一个error时，它就知道数据还没准备好，于是它可以再次发送read操作。一旦kernel中的数据准备好了，并且又再次收到了用户进程的system call,那么它马上就将数据拷贝到用户内存，然后返回。所以这种模型下，用户进程其实是需要不断的主动询问kernel数据准备好了没有</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午3.57.30.png" alt="屏幕快照 2018-01-19 下午3.57.30"></p>
+</li>
+<li><p>IO多路复用：</p>
+<p>​    该IO模型是基于select/epoll的。当用户进程调用了select，那么整个进程会被block，而同时kernel会“监视”所有select负责的socket，当任何一个socket中的数据准备好了，select就会返回。这个时候用户进程再调用read操作，将数据从kernel拷贝到用户进程。这个模型跟blocking IO相比：如果处理的连接数不是很高的话，使用select/epoll的web server不一定比使用multi-threading + blocking IO的web server性能更好，因为select/epoll是需要使用两个system call( select + read)，而blocking IO只调用一个system call(read)。select/epoll 的优势并不是对于单个连接能处理的更快，而是在于能处理更多的连接。</p>
+<p>​    IO多路复用中，每个socket，一般都设置成为non-blocking,但是，用户process还是被阻塞的，只不过是被select函数block的。 <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午3.57.39.png" alt="屏幕快照 2018-01-19 下午3.57.39"></p>
+<p>​    IO多路复用一般都会和Reactor设计模式配合使用，这样用户process只注册自己感兴趣的socket或者IO请求，然后去做自己的事情，等到数据到来时再进行处理，则可以提高CPU的利用率</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午4.10.11.png" alt="屏幕快照 2018-01-19 下午4.10.11"></p>
+</li>
+<li><p>异步IO：</p>
+<p>用户process发起read操作，即向kernel发送一个asynchronous read之后，会立刻收到内核的返回值。然后kernel等数据准备好，会将数据拷贝到用户内存，当这一切完成后，kernel会给用户进程发送一个signal，告知用户process read操作完成了。</p>
+<p>异步IO需要操作系统的支持，且是与Proactor设计模式配合使用的</p>
+<p> <img src="/2018/01/08/IO模型解读/屏幕快照 2018-01-19 下午4.20.32.png" alt="屏幕快照 2018-01-19 下午4.20.32"></p>
+<p>​</p>
+<p>​</p>
+<p>参考链接：</p>
+<p><a href="http://www.cnblogs.com/fanzhidongyzby/p/4098546.html" target="_blank" rel="noopener">http://www.cnblogs.com/fanzhidongyzby/p/4098546.html</a></p>
+</li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+
+      </div>
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/IO/" rel="tag"># IO</a>
+          
+            <a href="/tags/系统/" rel="tag"># 系统</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/05/文件描述符/" rel="next" title="文件描述符">
+                <i class="fa fa-chevron-left"></i> 文件描述符
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <!-- <div class="post-spread">
+      
+    </div> -->
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/headimg.jpeg"
+                alt="刘凯召" />
+            
+              <p class="site-author-name" itemprop="name">刘凯召</p>
+              <p class="site-description motion-element" itemprop="description">态度决定深度</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#IO模型分类"><span class="nav-number">1.</span> <span class="nav-text">IO模型分类</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">刘凯召</span>
+
+  
+</div>
+
+
+  <div class="powered-by">
+       <i class="fa fa-user-md"></i>
+       <span id="busuanzi_container_site_uv">本站访客数：<span id="busuanzi_value_site_uv"></span> | 访问量：<span id="busuanzi_value_site_pv"></span></span>
+  </div>  
+
+  <!-- <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div> -->
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+ <!-- <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div> -->
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <script type="text/javascript" src="//cdn.bootcss.com/canvas-nest.js/1.0.0/canvas-nest.min.js"></script>
+  
+</body>
+</html>
