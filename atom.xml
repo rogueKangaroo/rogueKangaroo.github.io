@@ -42,24 +42,6 @@
   </entry>
   
   <entry>
-    <title>Paxos算法</title>
-    <link href="http://yoursite.com/2018/02/08/Paxos%E7%AE%97%E6%B3%95/"/>
-    <id>http://yoursite.com/2018/02/08/Paxos算法/</id>
-    <published>2018-02-08T07:45:59.000Z</published>
-    <updated>2018-02-08T07:47:28.000Z</updated>
-    
-    <summary type="html">
-    
-    </summary>
-    
-      <category term="算法" scheme="http://yoursite.com/categories/%E7%AE%97%E6%B3%95/"/>
-    
-    
-      <category term="算法，一致性" scheme="http://yoursite.com/tags/%E7%AE%97%E6%B3%95%EF%BC%8C%E4%B8%80%E8%87%B4%E6%80%A7/"/>
-    
-  </entry>
-  
-  <entry>
     <title>CAP定理</title>
     <link href="http://yoursite.com/2018/02/05/CAP%E5%AE%9A%E7%90%86/"/>
     <id>http://yoursite.com/2018/02/05/CAP定理/</id>
@@ -368,6 +350,33 @@
   </entry>
   
   <entry>
+    <title>spring aop源码分析</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/</id>
+    <published>2017-11-30T03:00:00.000Z</published>
+    <updated>2017-11-30T03:25:24.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>源码分析：</p><p>这里先描述aop的具体流程：</p><p>一、解析xml</p><p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p><a id="more"></a><p>2.在parse函数里面解析这个标签①加载一个bean，这个bean的功能是根据注解来给相应的bean创建代理②处理proxy-target-class属性，当这个属性为true时，创建的代理是CGLIB 代理，处理 expose-proxy这个属性，这个属性为true，允许用户通过上下文的方式实现类内部调用也能增强。</p><p>二、加载bean</p><p>1.初始化bean的时候，在bean initialize之后会调用postProcessObjectFromFactoryBean方法</p><p>2.该方法中调用wrapIfNecessary方法，该方法中有两个重要的步骤①getAdvicesAndAdvisorsForBean获取该bean的所有拦截器，这个方法中分几个步骤：获取beanFactory中所有的bean，遍历找出AspectJ注解的bean,获取bean中所有的拦截器，存到缓存中，然后找到适合当前bean的所有拦截器②创建代理createProxy,这个方法中会根据用户配置比如proxy-target-class，被代理类是否implement接口等等来决定是否用jdk代理还是CGLIB代理，然后创建相应代理。</p><p>这里讲解一下jdk代理和CGLIB代理的区别和两者的源码分析：</p><p>jdk代理：是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理</p><p>CGLIB代理：利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理</p><p>1.如果目标对象实现了接口，默认情况下采取jdk的动态代理</p><p>2.如果目标对象实现了接口，可以强制采用CGLIB代理</p><p>3.如果目标没有实现接口，只能采用CGLIB代理</p><p>jdk代理使用方法：</p><p><code>public interface Say {</code></p><pre><code>void say();</code></pre><p><code>}</code></p><p><code>public class SayImpl implements Say {</code></p><pre><code>@Overridepublic void say() {    System.out.println(&quot;say hello&quot;);}</code></pre><p><code>}</code></p><p><code>public class MyInvocationHandler implements InvocationHandler{</code></p><pre><code>private Object targetObject;@Overridepublic Object invoke(Object proxy, Method method, Object[] args) throws Throwable {    System.out.println(&quot;say before&quot;);    Object object = method.invoke(targetObject,args);    System.out.println(&quot;say after&quot;);    return object;}public Object newProxy(Object targetObject){    this.targetObject=targetObject;    return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(),targetObject.getClass().getInterfaces(),this);}</code></pre><p><code>}</code></p><p><code>public class TestJDKProxy {</code></p><pre><code>public static void main(String[] args){    MyInvocationHandler myInvocationHandler = new MyInvocationHandler();    Say say = (Say) myInvocationHandler.newProxy(new SayImpl());    say.say();}</code></pre><p><code>}</code></p><p>根据源码分析生成的代理类叫ProxyN，所以在生成代理之后，把这个类写到硬盘，通过以下这个方法：</p><p><code>public class Util {</code></p><pre><code>public static void writeProxyClassToHardDisk(String path){    byte[] classFile = ProxyGenerator.generateProxyClass(&quot;$Proxy0&quot;, SayImpl.class.getInterfaces());    FileOutputStream out = null;    try{        out = new FileOutputStream(path);        out.write(classFile);        out.flush();    }catch (Exception e){        e.printStackTrace();    }finally {        try{            out.close();        }catch (Exception e){            e.printStackTrace();        }    }}</code></pre><p><code>}</code></p><p>此时通过反编译生成的class文件，即可得到生成代理类的源码如下：</p><p><code>public final class $Proxy0 extends Proxy</code></p><p>   implements Say</p><p><code>{</code></p><p>   private static Method m3;</p><p>   private static Method m1;</p><p>   private static Method m0;</p><p>   private static Method m2;</p><p>   public $Proxy0(InvocationHandler invocationhandler)</p><p>   {</p><pre><code>super(invocationhandler);</code></pre><p>   }</p><p>   public final void say()</p><p>   {</p><pre><code>try{   super.h.invoke(this, m3, null);   return;}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final boolean equals(Object obj)</p><p>   {</p><pre><code>try{   return ((Boolean)super.h.invoke(this, m1, new Object[] {      obj   })).booleanValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final int hashCode()</p><p>   {</p><pre><code>try{   return ((Integer)super.h.invoke(this, m0, null)).intValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final String toString()</p><p>   {</p><pre><code>try{   return (String)super.h.invoke(this, m2, null);}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   static </p><p>   {</p><pre><code>try{   m3 = Class.forName(&quot;com.springapp.mvc.Proxy.jdkProxy.Say&quot;).getMethod(&quot;say&quot;, new Class[0]);   m1 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;equals&quot;, new Class[] {      Class.forName(&quot;java.lang.Object&quot;)   });   m0 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;hashCode&quot;, new Class[0]);   m2 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;toString&quot;, new Class[0]);}catch (NoSuchMethodException nosuchmethodexception){   throw new NoSuchMethodError(nosuchmethodexception.getMessage());}catch (ClassNotFoundException classnotfoundexception){   throw new NoClassDefFoundError(classnotfoundexception.getMessage());}</code></pre><p>   }</p><p><code>}</code></p><p>cglib代理的使用方法：</p><p><code>public class SayHello {</code></p><pre><code>public void say(){    System.out.println(&quot;hello everyone&quot;);}</code></pre><p><code>}</code></p><p><code>public class CglibProxy implements MethodInterceptor {</code></p><pre><code>private Enhancer enhancer = new Enhancer();public Object getProxy(Class clazz){    enhancer.setSuperclass(clazz);    enhancer.setCallback(this);    return enhancer.create();}@Overridepublic Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {    System.out.println(&quot;前置代理&quot;);    Object res = methodProxy.invokeSuper(o,objects);    System.out.println(&quot;后置处理&quot;);    return res;}</code></pre><p><code>}</code></p><p><code>public class DoCglib {</code></p><pre><code>public static void main(String[] args){    CglibProxy proxy = new CglibProxy();    SayHello proxyImpl = (SayHello)proxy.getProxy(SayHello.class);    proxyImpl.say();}</code></pre><p><code>}</code></p><p>spring中jdk代理的处理：</p><p>spring中的jdkDynamicAopProxy确实实现了InvocationHandler接口，其中也包含了getProxy和invoke。其中getProxy函数创建了代理，</p><p>invoke函数里面包含了AOP的核心逻辑，这个方法逻辑：</p><p>1.处理equals方法</p><p>2.处理hash方法</p><p>3.处理expose属性，当这个属性为true时，暴露代理来实现内部调用是能通过代理实现增强</p><p>4.获取当前方法的所有拦截器</p><p>5.如果没有拦截器,那么直接调用切点方法，如果有会将拦截器封装到ReflectiveMethodInvocation</p><p>6.调用ReflectiveMethodInvocation类中的proceed方法</p><p>7.proceed方法中维护了链接调用的计数器，记录当前调用链接的位置，他会根据传入的拦截器链获取要执行的拦截器，然后实例化InterceptorAndDynamicMethodMatcher,InterceptorAndDynamicMethodMatcher中有两个属性MethodInterceptor、MethodMatcher,这两个属性的作用分别是：MethodInterceptor是一个接口，所以他会根据传入不同的拦截器来分发给不同的继承类来实现具体逻辑，比如传入前置拦截器，具体实现则交给了MethodBeforeAdviceInterceptor，在这个类invoke（会传入当前类当参数）方法中会先调用MethodBeforeAdvice的before方法，然后再调用传入类的proceed方法，以此循环，最终执行完拦截器链中的所有拦截器；MethodMatcher是方法匹配器，来检查当前拦截器是否适用当前方法，如果适用则执行拦截器，不适用则略过当前拦截器。</p><p>spring中cglib代理的处理：</p><p>三、调用方法</p><p>jdk代理：由于生成了代理匿名类，所以当调用被代理类的某个方法时，会调用代理类中的invoke方法，具体实现上面已经讲到了。</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;源码分析：&lt;/p&gt;
+&lt;p&gt;这里先描述aop的具体流程：&lt;/p&gt;
+&lt;p&gt;一、解析xml&lt;/p&gt;
+&lt;p&gt;1.加载xml资源文件时解析&lt;aop:aspectj-autoproxy expose-proxy=&quot;true&quot; proxy-target-class=&quot;true&quot;&gt;&lt;/aop:aspectj-autoproxy&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
+    
+    
+      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
+    
+      <category term="spring" scheme="http://yoursite.com/tags/spring/"/>
+    
+  </entry>
+  
+  <entry>
     <title>分析String源码所得</title>
     <link href="http://yoursite.com/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/"/>
     <id>http://yoursite.com/2017/11/30/2017-11-30--分析String源码所得/</id>
@@ -396,20 +405,22 @@
   </entry>
   
   <entry>
-    <title>spring aop源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/</id>
-    <published>2017-11-30T03:00:00.000Z</published>
-    <updated>2017-11-30T03:25:24.000Z</updated>
+    <title>hashMap源码分析</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/</id>
+    <published>2017-11-30T02:30:00.000Z</published>
+    <updated>2017-11-30T03:24:20.000Z</updated>
     
-    <content type="html"><![CDATA[<p>源码分析：</p><p>这里先描述aop的具体流程：</p><p>一、解析xml</p><p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p><a id="more"></a><p>2.在parse函数里面解析这个标签①加载一个bean，这个bean的功能是根据注解来给相应的bean创建代理②处理proxy-target-class属性，当这个属性为true时，创建的代理是CGLIB 代理，处理 expose-proxy这个属性，这个属性为true，允许用户通过上下文的方式实现类内部调用也能增强。</p><p>二、加载bean</p><p>1.初始化bean的时候，在bean initialize之后会调用postProcessObjectFromFactoryBean方法</p><p>2.该方法中调用wrapIfNecessary方法，该方法中有两个重要的步骤①getAdvicesAndAdvisorsForBean获取该bean的所有拦截器，这个方法中分几个步骤：获取beanFactory中所有的bean，遍历找出AspectJ注解的bean,获取bean中所有的拦截器，存到缓存中，然后找到适合当前bean的所有拦截器②创建代理createProxy,这个方法中会根据用户配置比如proxy-target-class，被代理类是否implement接口等等来决定是否用jdk代理还是CGLIB代理，然后创建相应代理。</p><p>这里讲解一下jdk代理和CGLIB代理的区别和两者的源码分析：</p><p>jdk代理：是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理</p><p>CGLIB代理：利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理</p><p>1.如果目标对象实现了接口，默认情况下采取jdk的动态代理</p><p>2.如果目标对象实现了接口，可以强制采用CGLIB代理</p><p>3.如果目标没有实现接口，只能采用CGLIB代理</p><p>jdk代理使用方法：</p><p><code>public interface Say {</code></p><pre><code>void say();</code></pre><p><code>}</code></p><p><code>public class SayImpl implements Say {</code></p><pre><code>@Overridepublic void say() {    System.out.println(&quot;say hello&quot;);}</code></pre><p><code>}</code></p><p><code>public class MyInvocationHandler implements InvocationHandler{</code></p><pre><code>private Object targetObject;@Overridepublic Object invoke(Object proxy, Method method, Object[] args) throws Throwable {    System.out.println(&quot;say before&quot;);    Object object = method.invoke(targetObject,args);    System.out.println(&quot;say after&quot;);    return object;}public Object newProxy(Object targetObject){    this.targetObject=targetObject;    return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(),targetObject.getClass().getInterfaces(),this);}</code></pre><p><code>}</code></p><p><code>public class TestJDKProxy {</code></p><pre><code>public static void main(String[] args){    MyInvocationHandler myInvocationHandler = new MyInvocationHandler();    Say say = (Say) myInvocationHandler.newProxy(new SayImpl());    say.say();}</code></pre><p><code>}</code></p><p>根据源码分析生成的代理类叫ProxyN，所以在生成代理之后，把这个类写到硬盘，通过以下这个方法：</p><p><code>public class Util {</code></p><pre><code>public static void writeProxyClassToHardDisk(String path){    byte[] classFile = ProxyGenerator.generateProxyClass(&quot;$Proxy0&quot;, SayImpl.class.getInterfaces());    FileOutputStream out = null;    try{        out = new FileOutputStream(path);        out.write(classFile);        out.flush();    }catch (Exception e){        e.printStackTrace();    }finally {        try{            out.close();        }catch (Exception e){            e.printStackTrace();        }    }}</code></pre><p><code>}</code></p><p>此时通过反编译生成的class文件，即可得到生成代理类的源码如下：</p><p><code>public final class $Proxy0 extends Proxy</code></p><p>   implements Say</p><p><code>{</code></p><p>   private static Method m3;</p><p>   private static Method m1;</p><p>   private static Method m0;</p><p>   private static Method m2;</p><p>   public $Proxy0(InvocationHandler invocationhandler)</p><p>   {</p><pre><code>super(invocationhandler);</code></pre><p>   }</p><p>   public final void say()</p><p>   {</p><pre><code>try{   super.h.invoke(this, m3, null);   return;}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final boolean equals(Object obj)</p><p>   {</p><pre><code>try{   return ((Boolean)super.h.invoke(this, m1, new Object[] {      obj   })).booleanValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final int hashCode()</p><p>   {</p><pre><code>try{   return ((Integer)super.h.invoke(this, m0, null)).intValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final String toString()</p><p>   {</p><pre><code>try{   return (String)super.h.invoke(this, m2, null);}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   static </p><p>   {</p><pre><code>try{   m3 = Class.forName(&quot;com.springapp.mvc.Proxy.jdkProxy.Say&quot;).getMethod(&quot;say&quot;, new Class[0]);   m1 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;equals&quot;, new Class[] {      Class.forName(&quot;java.lang.Object&quot;)   });   m0 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;hashCode&quot;, new Class[0]);   m2 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;toString&quot;, new Class[0]);}catch (NoSuchMethodException nosuchmethodexception){   throw new NoSuchMethodError(nosuchmethodexception.getMessage());}catch (ClassNotFoundException classnotfoundexception){   throw new NoClassDefFoundError(classnotfoundexception.getMessage());}</code></pre><p>   }</p><p><code>}</code></p><p>cglib代理的使用方法：</p><p><code>public class SayHello {</code></p><pre><code>public void say(){    System.out.println(&quot;hello everyone&quot;);}</code></pre><p><code>}</code></p><p><code>public class CglibProxy implements MethodInterceptor {</code></p><pre><code>private Enhancer enhancer = new Enhancer();public Object getProxy(Class clazz){    enhancer.setSuperclass(clazz);    enhancer.setCallback(this);    return enhancer.create();}@Overridepublic Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {    System.out.println(&quot;前置代理&quot;);    Object res = methodProxy.invokeSuper(o,objects);    System.out.println(&quot;后置处理&quot;);    return res;}</code></pre><p><code>}</code></p><p><code>public class DoCglib {</code></p><pre><code>public static void main(String[] args){    CglibProxy proxy = new CglibProxy();    SayHello proxyImpl = (SayHello)proxy.getProxy(SayHello.class);    proxyImpl.say();}</code></pre><p><code>}</code></p><p>spring中jdk代理的处理：</p><p>spring中的jdkDynamicAopProxy确实实现了InvocationHandler接口，其中也包含了getProxy和invoke。其中getProxy函数创建了代理，</p><p>invoke函数里面包含了AOP的核心逻辑，这个方法逻辑：</p><p>1.处理equals方法</p><p>2.处理hash方法</p><p>3.处理expose属性，当这个属性为true时，暴露代理来实现内部调用是能通过代理实现增强</p><p>4.获取当前方法的所有拦截器</p><p>5.如果没有拦截器,那么直接调用切点方法，如果有会将拦截器封装到ReflectiveMethodInvocation</p><p>6.调用ReflectiveMethodInvocation类中的proceed方法</p><p>7.proceed方法中维护了链接调用的计数器，记录当前调用链接的位置，他会根据传入的拦截器链获取要执行的拦截器，然后实例化InterceptorAndDynamicMethodMatcher,InterceptorAndDynamicMethodMatcher中有两个属性MethodInterceptor、MethodMatcher,这两个属性的作用分别是：MethodInterceptor是一个接口，所以他会根据传入不同的拦截器来分发给不同的继承类来实现具体逻辑，比如传入前置拦截器，具体实现则交给了MethodBeforeAdviceInterceptor，在这个类invoke（会传入当前类当参数）方法中会先调用MethodBeforeAdvice的before方法，然后再调用传入类的proceed方法，以此循环，最终执行完拦截器链中的所有拦截器；MethodMatcher是方法匹配器，来检查当前拦截器是否适用当前方法，如果适用则执行拦截器，不适用则略过当前拦截器。</p><p>spring中cglib代理的处理：</p><p>三、调用方法</p><p>jdk代理：由于生成了代理匿名类，所以当调用被代理类的某个方法时，会调用代理类中的invoke方法，具体实现上面已经讲到了。</p>]]></content>
+    <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p><p>hashMap就是数组加链表的存储结构。</p><p>put源码：</p><p><code>public V put(K key, V value) {</code></p><pre><code>if (table == EMPTY_TABLE) {</code></pre><a id="more"></a><pre><code>        inflateTable(threshold);    }    if (key == null)        return putForNullKey(value);    int hash = hash(key);    int i = indexFor(hash, table.length);    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {        Object k;        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {            V oldValue = e.value;            e.value = value;            e.recordAccess(this);            return oldValue;        }    }    modCount++;    addEntry(hash, key, value, i);    return null;`}`</code></pre><p>根据每个key进行hash,hash的源码如下：</p><pre><code>`final int hash(Object k) {`    int h = hashSeed;    if (0 != h &amp;&amp; k instanceof String) {        return sun.misc.Hashing.stringHash32((String) k);    }    h ^= k.hashCode();    // This function ensures that hashCodes that differ only by    // constant multiples at each bit position have a bounded    // number of collisions (approximately 8 at default load factor).    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);`}`</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p><pre><code>`void transfer(Entry[] newTable, boolean rehash) {`    int newCapacity = newTable.length;    for (Entry&lt;K,V&gt; e : table) {        while(null != e) {            Entry&lt;K,V&gt; next = e.next;            if (rehash) {                e.hash = null == e.key ? 0 : hash(e.key);            }            int i = indexFor(e.hash, newCapacity);            e.next = newTable[i];            newTable[i] = e;            e = next;        }    }`}`</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p><p>以上中的Entry的结构是：</p><p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p><pre><code>final K key;V value;Entry&lt;K,V&gt; next;int hash;</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p><pre><code>    value = v;    next = n;    key = k;    hash = h;}</code></pre><p><code>}</code></p>]]></content>
     
     <summary type="html">
     
-      &lt;p&gt;源码分析：&lt;/p&gt;
-&lt;p&gt;这里先描述aop的具体流程：&lt;/p&gt;
-&lt;p&gt;一、解析xml&lt;/p&gt;
-&lt;p&gt;1.加载xml资源文件时解析&lt;aop:aspectj-autoproxy expose-proxy=&quot;true&quot; proxy-target-class=&quot;true&quot;&gt;&lt;/aop:aspectj-autoproxy&gt;&lt;/p&gt;
+      &lt;p&gt;java基本存储结构：数组和链表&lt;/p&gt;
+&lt;p&gt;hashMap就是数组加链表的存储结构。&lt;/p&gt;
+&lt;p&gt;put源码：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;public V put(K key, V value) {&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;if (table == EMPTY_TABLE) {
+&lt;/code&gt;&lt;/pre&gt;
     
     </summary>
     
@@ -418,7 +429,7 @@
     
       <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
     
-      <category term="spring" scheme="http://yoursite.com/tags/spring/"/>
+      <category term="hashMap" scheme="http://yoursite.com/tags/hashMap/"/>
     
   </entry>
   
@@ -481,35 +492,6 @@
       <category term="java" scheme="http://yoursite.com/tags/java/"/>
     
       <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>hashMap源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/</id>
-    <published>2017-11-30T02:30:00.000Z</published>
-    <updated>2017-11-30T03:24:20.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p><p>hashMap就是数组加链表的存储结构。</p><p>put源码：</p><p><code>public V put(K key, V value) {</code></p><pre><code>if (table == EMPTY_TABLE) {</code></pre><a id="more"></a><pre><code>        inflateTable(threshold);    }    if (key == null)        return putForNullKey(value);    int hash = hash(key);    int i = indexFor(hash, table.length);    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {        Object k;        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {            V oldValue = e.value;            e.value = value;            e.recordAccess(this);            return oldValue;        }    }    modCount++;    addEntry(hash, key, value, i);    return null;`}`</code></pre><p>根据每个key进行hash,hash的源码如下：</p><pre><code>`final int hash(Object k) {`    int h = hashSeed;    if (0 != h &amp;&amp; k instanceof String) {        return sun.misc.Hashing.stringHash32((String) k);    }    h ^= k.hashCode();    // This function ensures that hashCodes that differ only by    // constant multiples at each bit position have a bounded    // number of collisions (approximately 8 at default load factor).    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);`}`</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p><pre><code>`void transfer(Entry[] newTable, boolean rehash) {`    int newCapacity = newTable.length;    for (Entry&lt;K,V&gt; e : table) {        while(null != e) {            Entry&lt;K,V&gt; next = e.next;            if (rehash) {                e.hash = null == e.key ? 0 : hash(e.key);            }            int i = indexFor(e.hash, newCapacity);            e.next = newTable[i];            newTable[i] = e;            e = next;        }    }`}`</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p><p>以上中的Entry的结构是：</p><p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p><pre><code>final K key;V value;Entry&lt;K,V&gt; next;int hash;</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p><pre><code>    value = v;    next = n;    key = k;    hash = h;}</code></pre><p><code>}</code></p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;java基本存储结构：数组和链表&lt;/p&gt;
-&lt;p&gt;hashMap就是数组加链表的存储结构。&lt;/p&gt;
-&lt;p&gt;put源码：&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;public V put(K key, V value) {&lt;/code&gt;&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;if (table == EMPTY_TABLE) {
-&lt;/code&gt;&lt;/pre&gt;
-    
-    </summary>
-    
-      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
-    
-    
-      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-      <category term="hashMap" scheme="http://yoursite.com/tags/hashMap/"/>
     
   </entry>
   
