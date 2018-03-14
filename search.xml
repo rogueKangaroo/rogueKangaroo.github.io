@@ -9,6 +9,7 @@
 <p>B-tree是一种多路搜索树（不一定是二叉的）</p>
 <p>一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树）。它或者是空树，或者是满足下列性质的树：</p>
 <p>1.根结点至少有两个子女</p>
+<a id="more"></a>
 <p>2.每个非根结点所包含的关键字个数j满足：m/2-1 &lt;=j&lt;= m-1;</p>
 <p>3.除根结点以外的所有结点（不包括叶子结点）的度数正好是关键字总数加1，故内部子树个数k满足：m/2 &lt;=k&lt;= m;</p>
 <p>4.所有的叶子结点都位于同一层</p>
@@ -1393,126 +1394,149 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
     </entry>
     
     <entry>
-      <title><![CDATA[hashMap源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
-<p>hashMap就是数组加链表的存储结构。</p>
-<p>put源码：</p>
-<p><code>public V put(K key, V value) {</code></p>
-<pre><code>if (table == EMPTY_TABLE) {
+      <title><![CDATA[ArrayList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
 </code></pre><a id="more"></a>
-<pre><code>        inflateTable(threshold);
+<pre><code>     return true;
 
-    }
+}
+</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
+<p>其中的ensureCapacityInternal函数的源码为：</p>
+<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
+<pre><code>if(elementData == EMPTY_ELEMENTDATA){
 
-    if (key == null)
+     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
 
-        return putForNullKey(value);
+}
 
-    int hash = hash(key);
+ensureExplicitCapacity(minCapacity);
+</code></pre><p><code>}</code></p>
+<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
+<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
 
-    int i = indexFor(hash, table.length);
+     modCount++;
 
-    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
+     if(minCapacity - elementData.length&gt;0){
 
-        Object k;
+          grow(minCapacity);
 
-        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
+     }
 
-            V oldValue = e.value;
+}
+</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
+<p>grow()的源码为：</p>
+<p><code>private void grow(int minCapacity){</code></p>
+<pre><code>int oldCapacity = elementData.length;
 
-            e.value = value;
+int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
 
-            e.recordAccess(this);
+if(newCapacity - minCapacity&lt;0)
 
-            return oldValue;
+     newCapacity=minCapacity;
 
-        }
+if(newCapacity-MAX_ARRAY_SIZE&gt;0)
 
-    }
+     newCapacity = hugeCapacity(minCapacity);
 
-    modCount++;
+ elementData = Arrays.copyof(element,newCapacity);
+</code></pre><p><code>}</code></p>
+<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
+<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
+<p><code>public E remove(int index){</code></p>
+<pre><code>rangeCheck(index);
 
-    addEntry(hash, key, value, i);
+modCount++;
 
-    return null;
+E oldValue=elementData(index);
 
-`}`
-</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
-<pre><code>`final int hash(Object k) {`
+int numMoved = size -index -1;
 
-    int h = hashSeed;
+if(numMoved&gt;0){
 
-    if (0 != h &amp;&amp; k instanceof String) {
+     System.arraycopy(elementData,index+1,elementData,index,numMoved);
 
-        return sun.misc.Hashing.stringHash32((String) k);
+}
 
-    }
+elementData[--size]=null;
 
-    h ^= k.hashCode();
+return oldValue;
+</code></pre><p> <code>}</code></p>
+<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
+<p>我们再看get的源码:</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>rangeCheck(index);
 
-    // This function ensures that hashCodes that differ only by
+checkForComodification();
 
-    // constant multiples at each bit position have a bounded
+return ArrayList.this.elementData(offset+index);
+</code></pre><p><code>}</code></p>
+<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
+<p><code>public E set(int index,E e){</code></p>
+<pre><code>rangeCheck(index);
 
-    // number of collisions (approximately 8 at default load factor).
+checkForComodification();
 
-    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
+E oldValue = Array.this.elementData(offset + index);
 
-    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+ArrayList.this.elementData[offset +index]=e;
 
-`}`
-</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
-<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
+return oldValue;
+</code></pre><p><code>}</code></p>
+<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
+<p>contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)&gt;=0;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>if(o==null){
 
-    int newCapacity = newTable.length;
+     for(int i=0;i&lt;size;i++){
 
-    for (Entry&lt;K,V&gt; e : table) {
+          if(elementData[i]==null)
 
-        while(null != e) {
+               return i;
 
-            Entry&lt;K,V&gt; next = e.next;
+     }
 
-            if (rehash) {
+}else {
 
-                e.hash = null == e.key ? 0 : hash(e.key);
+     for(int i=0;i&lt;size;i++){
 
-            }
+          if(o.equals(elementData[i))
 
-            int i = indexFor(e.hash, newCapacity);
+               return i;
 
-            e.next = newTable[i];
+     }
 
-            newTable[i] = e;
+}
 
-            e = next;
+return -1;
+</code></pre><p><code>}</code></p>
+<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
+<p>还有clone的源码：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>try{
 
-        }
+     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
 
-    }
+     v.elementData = Arrays.copyof(elementData,size);
 
-`}`
-</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
-<p>以上中的Entry的结构是：</p>
-<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
-<pre><code>final K key;
+     v.modCount = 0;
 
-V value;
+}catch(CloneNotSupportedException e){
 
-Entry&lt;K,V&gt; next;
-
-int hash;
-</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
-<pre><code>    value = v;
-
-    next = n;
-
-    key = k;
-
-    hash = h;
+     throw new InternalError();
 
 }
 </code></pre><p><code>}</code></p>
+<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
 ]]></content>
       
         <categories>
@@ -1524,9 +1548,9 @@ int hash;
         
         <tags>
             
-            <tag> 源码 </tag>
+            <tag> java </tag>
             
-            <tag> hashMap </tag>
+            <tag> 源码 </tag>
             
         </tags>
         
@@ -1762,149 +1786,126 @@ return clone;
     </entry>
     
     <entry>
-      <title><![CDATA[ArrayList源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
-<p><code>ArrayList 的add源码为：</code></p>
-<pre><code>public boolean add(E e){
-
-     ensureCapacityInternal(size +1);
-
-     elementData[size++]==e;
+      <title><![CDATA[hashMap源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
 </code></pre><a id="more"></a>
-<pre><code>     return true;
+<pre><code>        inflateTable(threshold);
 
-}
-</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
-<p>其中的ensureCapacityInternal函数的源码为：</p>
-<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
-<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+    }
 
-     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+    if (key == null)
 
-}
+        return putForNullKey(value);
 
-ensureExplicitCapacity(minCapacity);
-</code></pre><p><code>}</code></p>
-<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
-<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+    int hash = hash(key);
 
-     modCount++;
+    int i = indexFor(hash, table.length);
 
-     if(minCapacity - elementData.length&gt;0){
+    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
 
-          grow(minCapacity);
+        Object k;
 
-     }
+        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
 
-}
-</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
-<p>grow()的源码为：</p>
-<p><code>private void grow(int minCapacity){</code></p>
-<pre><code>int oldCapacity = elementData.length;
+            V oldValue = e.value;
 
-int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+            e.value = value;
 
-if(newCapacity - minCapacity&lt;0)
+            e.recordAccess(this);
 
-     newCapacity=minCapacity;
+            return oldValue;
 
-if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+        }
 
-     newCapacity = hugeCapacity(minCapacity);
+    }
 
- elementData = Arrays.copyof(element,newCapacity);
-</code></pre><p><code>}</code></p>
-<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
-<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
-<p><code>public E remove(int index){</code></p>
-<pre><code>rangeCheck(index);
+    modCount++;
 
-modCount++;
+    addEntry(hash, key, value, i);
 
-E oldValue=elementData(index);
+    return null;
 
-int numMoved = size -index -1;
+`}`
+</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
+<pre><code>`final int hash(Object k) {`
 
-if(numMoved&gt;0){
+    int h = hashSeed;
 
-     System.arraycopy(elementData,index+1,elementData,index,numMoved);
+    if (0 != h &amp;&amp; k instanceof String) {
 
-}
+        return sun.misc.Hashing.stringHash32((String) k);
 
-elementData[--size]=null;
+    }
 
-return oldValue;
-</code></pre><p> <code>}</code></p>
-<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
-<p>我们再看get的源码:</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>rangeCheck(index);
+    h ^= k.hashCode();
 
-checkForComodification();
+    // This function ensures that hashCodes that differ only by
 
-return ArrayList.this.elementData(offset+index);
-</code></pre><p><code>}</code></p>
-<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
-<p><code>public E set(int index,E e){</code></p>
-<pre><code>rangeCheck(index);
+    // constant multiples at each bit position have a bounded
 
-checkForComodification();
+    // number of collisions (approximately 8 at default load factor).
 
-E oldValue = Array.this.elementData(offset + index);
+    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
 
-ArrayList.this.elementData[offset +index]=e;
+    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
 
-return oldValue;
-</code></pre><p><code>}</code></p>
-<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
-<p>contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)&gt;=0;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>if(o==null){
+`}`
+</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
+<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
 
-     for(int i=0;i&lt;size;i++){
+    int newCapacity = newTable.length;
 
-          if(elementData[i]==null)
+    for (Entry&lt;K,V&gt; e : table) {
 
-               return i;
+        while(null != e) {
 
-     }
+            Entry&lt;K,V&gt; next = e.next;
 
-}else {
+            if (rehash) {
 
-     for(int i=0;i&lt;size;i++){
+                e.hash = null == e.key ? 0 : hash(e.key);
 
-          if(o.equals(elementData[i))
+            }
 
-               return i;
+            int i = indexFor(e.hash, newCapacity);
 
-     }
+            e.next = newTable[i];
 
-}
+            newTable[i] = e;
 
-return -1;
-</code></pre><p><code>}</code></p>
-<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
-<p>还有clone的源码：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>try{
+            e = next;
 
-     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
+        }
 
-     v.elementData = Arrays.copyof(elementData,size);
+    }
 
-     v.modCount = 0;
+`}`
+</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
+<p>以上中的Entry的结构是：</p>
+<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
+<pre><code>final K key;
 
-}catch(CloneNotSupportedException e){
+V value;
 
-     throw new InternalError();
+Entry&lt;K,V&gt; next;
+
+int hash;
+</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
+<pre><code>    value = v;
+
+    next = n;
+
+    key = k;
+
+    hash = h;
 
 }
 </code></pre><p><code>}</code></p>
-<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
 ]]></content>
       
         <categories>
@@ -1916,9 +1917,9 @@ return -1;
         
         <tags>
             
-            <tag> java </tag>
-            
             <tag> 源码 </tag>
+            
+            <tag> hashMap </tag>
             
         </tags>
         
