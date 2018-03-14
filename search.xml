@@ -3,6 +3,79 @@
   
     
     <entry>
+      <title><![CDATA[B-Tree数据结构]]></title>
+      <url>/2018/03/14/B-Tree%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</url>
+      <content type="html"><![CDATA[<h2 id="1-定义"><a href="#1-定义" class="headerlink" title="1.定义"></a>1.定义</h2><p>B-tree即为B树，B即为Balanced</p>
+<p>B-tree是一种多路搜索树（不一定是二叉的）</p>
+<p>一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树）。它或者是空树，或者是满足下列性质的树：</p>
+<p>1.根结点至少有两个子女</p>
+<p>2.每个非根结点所包含的关键字个数j满足：m/2-1 &lt;=j&lt;= m-1;</p>
+<p>3.除根结点以外的所有结点（不包括叶子结点）的度数正好是关键字总数加1，故内部子树个数k满足：m/2 &lt;=k&lt;= m;</p>
+<p>4.所有的叶子结点都位于同一层</p>
+<p>在B树中，每个结点中关键字从小到大排列，并且当该结点的孩子是非叶子结点时，该k-1个关键字正好是k个孩子包含的关键字的值域的分划。</p>
+<p>因为叶子结点不包含关键字，所以可以把叶子结点看成在树里实际上并不存在外部结点，指向这些外部结点的指针为空，叶子结点的数目正好等于树中所包含的关键字总个数加1。</p>
+<h2 id="2-B-tree的插入和删除"><a href="#2-B-tree的插入和删除" class="headerlink" title="2.B-tree的插入和删除"></a>2.B-tree的插入和删除</h2><h4 id="insert"><a href="#insert" class="headerlink" title="insert"></a>insert</h4><p>插入一个元素时，首先在B树中是否存在，如果不存在，即在叶子结点处结束，然后在叶子结点中插入该新的元素，注意：如果叶子结点空间足够，即小于阶数m，这里需要向右移动该叶子结点中大于新插入关键字的元素，如果空间满了以致没有足够的空间去添加新的元素，则将该结点进行分裂，将一半数量的关键字元素分裂到新的其相邻右结点中，中间关键字元素上移到父结点中（如果父结点空间也满了，也同样需要分裂操作），而且当结点中关键字元素向右移动了，相关的指针也需要向右移。如果在根结点插入新元素，空间满了，则进行分裂操作，这样原来的根结点中的中间关键字元素向上移动到新的根结点中，因此导致树的高度增加一层。</p>
+<p>示例：</p>
+<p>一个4阶的B-tree（非根结点关键字数小于2个就合并，大于4个就分裂）</p>
+<p>1.先有4个字母</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906171641792.jpg" alt="20150906171641792"></p>
+<p>2.当插入H时，发现空间不够，以致将其分裂成2个结点，移动中间元素G上移到新的根结点中，在实现过程中，咱们把A和C留在当前结点中，而H和N放置新的其右邻居结点中。</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906171720873.jpg" alt="20150906171720873"></p>
+<p>3.当插入E,K,Q时，不需要任何分裂操作</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906171806173.jpg" alt="20150906171806173"></p>
+<p>4.插入M需要一次分裂，注意M恰好是中间关键字元素，以致向上移到父节点中。如图：</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906171910766.jpg" alt="20150906171910766"></p>
+<p>5.插入F,W,L,T不需要任何操作。如图：</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906171944726.jpg" alt="20150906171944726"></p>
+<p>6.插入Z时，最右的叶子结点空间满了，需要进行分裂操作，中间元素T上移到父节点中，注意上移中间元素，树最终还是保持平衡，分裂结果的结点存在2个关键字元素 <img src="/2018/03/14/B-Tree数据结构/20150906172007317.jpg" alt="20150906172007317"></p>
+<p>7.插入D时，导致最左边的叶子结点被分裂，D恰好也是中间元素，上移到父节点中，然后字母P,R,X,Y陆续插入不需要任何分裂操作。如图：</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906172038313.jpg" alt="20150906172038313"></p>
+<p>8.最后插入S时，含有N,P,Q,R的结点需要分裂，把中间元素Q上移到父节点中，但是父节点空间也满了，所以也要分裂，将父节点中的中间元素M上移到新形成的根结点中，注意以前在父节点中第三个指针在修改后包括D和G节点中，这样具体插入操作完成 <img src="/2018/03/14/B-Tree数据结构/20150906172114106.jpg" alt="20150906172114106"></p>
+<h4 id="delete"><a href="#delete" class="headerlink" title="delete"></a>delete</h4><p>若被删关键字K所在的结点非树叶，则用K的中序前趋（或后继）K’取代K,然后从叶子中删去K’。（前趋结点：结点val值小于该结点val值并且值最大的结点；后继结点：节点val值大于该结点val值并且最小的结点）</p>
+<p>从叶子开始删去某关键字K的三种情形为：</p>
+<p>1.若x-&gt;keyNum&gt;min,则只需删去K及其右指针（x如果是叶子，则右指针为空），即可使删除操作结束</p>
+<p>2.若x-&gt;keyNum=min,该叶子中的关键字个数已是最小值，删除K及其右指针后会破坏B树的特性（除根结点以外的所有结点（不包括叶子结点）的度数正好是关键字总数加一，故内部子树k满足：m/2 &lt;= k &lt;= m）。若x的左（或右）邻兄弟结点y中的关键字数目大于Min,则将y中的最大（或最小）关键字上移至双亲结点parent中，而将parent中相应的关键字下移至x中。显然这种移动使得双亲中关键字数目不变；y被移出一个关键字，故其keyNum减一，因它原大于Min，故减少1个关键字后keyNum仍大于等于Min;而x中已移入一个关键字，故删K后x中仍有Min个关键字。）</p>
+<p>3.若x及其相邻的左右兄弟中的关键字数目均为最小值Min，则上述的移动操作就不奏效，此时须x和左或者右兄弟合并。不妨设x有右邻兄弟y(对左类似)，在x中删去K后，将双亲结点parent中介于x和y之间的关键字K,作为中间关键字，并与x和y中的关键字一起合并为一个新的结点取代x和y。因为x和y原各有Min个关键字，从双亲中移入的K’抵消了从x中删除的K,故新节点中恰好有2Min个关键字，没有破坏B-tree的上述性质（3）。但由于K’从双亲中移动到新节点后，相当于从parent中删去了K’,若parent-&gt;keyNum原大于Min,则删除操作到此结束；否则，同样要通过移动parent的左右兄弟中的关键字或将parent与其左右兄弟合并的方法来维护B-tree性质。最坏情况下，合并操作会上传播至根，当根中只有一个关键字时，合并操作将会使根结点及其两个孩子合并成一个新的根，从而使整棵树的高度减少一层。</p>
+<p>以上示例如图：</p>
+<p> <img src="/2018/03/14/B-Tree数据结构/20150906172428271.jpg" alt="20150906172428271"></p>
+]]></content>
+      
+        <categories>
+            
+            <category> 数据结构 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> Tree，数据结构 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Paxos算法]]></title>
+      <url>/2018/02/08/Paxos%E7%AE%97%E6%B3%95/</url>
+      <content type="html"></content>
+      
+        <categories>
+            
+            <category> 算法 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 算法，一致性 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[CAP定理]]></title>
       <url>/2018/02/05/CAP%E5%AE%9A%E7%90%86/</url>
       <content type="html"><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>CAP定理，它指出对于一个分布式计算系统来说，不可能同时满足以下三点：</p>
@@ -786,34 +859,6 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[JVM内存模型]]></title>
-      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
-      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
-<a id="more"></a>
-<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
-<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
-<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
-<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
-<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
-<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
-]]></content>
-      
-        <categories>
-            
-            <category> JVM </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> JVM </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[jstack及dump文件分析]]></title>
       <url>/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>jstack命令的用法为jstack pid</p>
@@ -932,6 +977,34 @@ void ( *valDestructor) (void *privdata,void *obj);
             <tag> 调优 </tag>
             
             <tag> jstack </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[JVM内存模型]]></title>
+      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
+      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+<a id="more"></a>
+<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
+<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
+<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
+<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
+<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
+<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
+]]></content>
+      
+        <categories>
+            
+            <category> JVM </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> JVM </tag>
             
         </tags>
         
@@ -1320,149 +1393,126 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
     </entry>
     
     <entry>
-      <title><![CDATA[ArrayList源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
-<p><code>ArrayList 的add源码为：</code></p>
-<pre><code>public boolean add(E e){
-
-     ensureCapacityInternal(size +1);
-
-     elementData[size++]==e;
+      <title><![CDATA[hashMap源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
 </code></pre><a id="more"></a>
-<pre><code>     return true;
+<pre><code>        inflateTable(threshold);
 
-}
-</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
-<p>其中的ensureCapacityInternal函数的源码为：</p>
-<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
-<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+    }
 
-     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+    if (key == null)
 
-}
+        return putForNullKey(value);
 
-ensureExplicitCapacity(minCapacity);
-</code></pre><p><code>}</code></p>
-<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
-<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+    int hash = hash(key);
 
-     modCount++;
+    int i = indexFor(hash, table.length);
 
-     if(minCapacity - elementData.length&gt;0){
+    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
 
-          grow(minCapacity);
+        Object k;
 
-     }
+        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
 
-}
-</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
-<p>grow()的源码为：</p>
-<p><code>private void grow(int minCapacity){</code></p>
-<pre><code>int oldCapacity = elementData.length;
+            V oldValue = e.value;
 
-int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+            e.value = value;
 
-if(newCapacity - minCapacity&lt;0)
+            e.recordAccess(this);
 
-     newCapacity=minCapacity;
+            return oldValue;
 
-if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+        }
 
-     newCapacity = hugeCapacity(minCapacity);
+    }
 
- elementData = Arrays.copyof(element,newCapacity);
-</code></pre><p><code>}</code></p>
-<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
-<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
-<p><code>public E remove(int index){</code></p>
-<pre><code>rangeCheck(index);
+    modCount++;
 
-modCount++;
+    addEntry(hash, key, value, i);
 
-E oldValue=elementData(index);
+    return null;
 
-int numMoved = size -index -1;
+`}`
+</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
+<pre><code>`final int hash(Object k) {`
 
-if(numMoved&gt;0){
+    int h = hashSeed;
 
-     System.arraycopy(elementData,index+1,elementData,index,numMoved);
+    if (0 != h &amp;&amp; k instanceof String) {
 
-}
+        return sun.misc.Hashing.stringHash32((String) k);
 
-elementData[--size]=null;
+    }
 
-return oldValue;
-</code></pre><p> <code>}</code></p>
-<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
-<p>我们再看get的源码:</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>rangeCheck(index);
+    h ^= k.hashCode();
 
-checkForComodification();
+    // This function ensures that hashCodes that differ only by
 
-return ArrayList.this.elementData(offset+index);
-</code></pre><p><code>}</code></p>
-<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
-<p><code>public E set(int index,E e){</code></p>
-<pre><code>rangeCheck(index);
+    // constant multiples at each bit position have a bounded
 
-checkForComodification();
+    // number of collisions (approximately 8 at default load factor).
 
-E oldValue = Array.this.elementData(offset + index);
+    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
 
-ArrayList.this.elementData[offset +index]=e;
+    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
 
-return oldValue;
-</code></pre><p><code>}</code></p>
-<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
-<p>contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)&gt;=0;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>if(o==null){
+`}`
+</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
+<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
 
-     for(int i=0;i&lt;size;i++){
+    int newCapacity = newTable.length;
 
-          if(elementData[i]==null)
+    for (Entry&lt;K,V&gt; e : table) {
 
-               return i;
+        while(null != e) {
 
-     }
+            Entry&lt;K,V&gt; next = e.next;
 
-}else {
+            if (rehash) {
 
-     for(int i=0;i&lt;size;i++){
+                e.hash = null == e.key ? 0 : hash(e.key);
 
-          if(o.equals(elementData[i))
+            }
 
-               return i;
+            int i = indexFor(e.hash, newCapacity);
 
-     }
+            e.next = newTable[i];
 
-}
+            newTable[i] = e;
 
-return -1;
-</code></pre><p><code>}</code></p>
-<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
-<p>还有clone的源码：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>try{
+            e = next;
 
-     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
+        }
 
-     v.elementData = Arrays.copyof(elementData,size);
+    }
 
-     v.modCount = 0;
+`}`
+</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
+<p>以上中的Entry的结构是：</p>
+<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
+<pre><code>final K key;
 
-}catch(CloneNotSupportedException e){
+V value;
 
-     throw new InternalError();
+Entry&lt;K,V&gt; next;
+
+int hash;
+</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
+<pre><code>    value = v;
+
+    next = n;
+
+    key = k;
+
+    hash = h;
 
 }
 </code></pre><p><code>}</code></p>
-<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
 ]]></content>
       
         <categories>
@@ -1474,9 +1524,9 @@ return -1;
         
         <tags>
             
-            <tag> java </tag>
-            
             <tag> 源码 </tag>
+            
+            <tag> hashMap </tag>
             
         </tags>
         
@@ -1712,126 +1762,149 @@ return clone;
     </entry>
     
     <entry>
-      <title><![CDATA[hashMap源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
-<p>hashMap就是数组加链表的存储结构。</p>
-<p>put源码：</p>
-<p><code>public V put(K key, V value) {</code></p>
-<pre><code>if (table == EMPTY_TABLE) {
+      <title><![CDATA[ArrayList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
 </code></pre><a id="more"></a>
-<pre><code>        inflateTable(threshold);
+<pre><code>     return true;
 
-    }
+}
+</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
+<p>其中的ensureCapacityInternal函数的源码为：</p>
+<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
+<pre><code>if(elementData == EMPTY_ELEMENTDATA){
 
-    if (key == null)
+     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
 
-        return putForNullKey(value);
+}
 
-    int hash = hash(key);
+ensureExplicitCapacity(minCapacity);
+</code></pre><p><code>}</code></p>
+<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
+<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
 
-    int i = indexFor(hash, table.length);
+     modCount++;
 
-    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
+     if(minCapacity - elementData.length&gt;0){
 
-        Object k;
+          grow(minCapacity);
 
-        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
+     }
 
-            V oldValue = e.value;
+}
+</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
+<p>grow()的源码为：</p>
+<p><code>private void grow(int minCapacity){</code></p>
+<pre><code>int oldCapacity = elementData.length;
 
-            e.value = value;
+int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
 
-            e.recordAccess(this);
+if(newCapacity - minCapacity&lt;0)
 
-            return oldValue;
+     newCapacity=minCapacity;
 
-        }
+if(newCapacity-MAX_ARRAY_SIZE&gt;0)
 
-    }
+     newCapacity = hugeCapacity(minCapacity);
 
-    modCount++;
+ elementData = Arrays.copyof(element,newCapacity);
+</code></pre><p><code>}</code></p>
+<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
+<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
+<p><code>public E remove(int index){</code></p>
+<pre><code>rangeCheck(index);
 
-    addEntry(hash, key, value, i);
+modCount++;
 
-    return null;
+E oldValue=elementData(index);
 
-`}`
-</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
-<pre><code>`final int hash(Object k) {`
+int numMoved = size -index -1;
 
-    int h = hashSeed;
+if(numMoved&gt;0){
 
-    if (0 != h &amp;&amp; k instanceof String) {
+     System.arraycopy(elementData,index+1,elementData,index,numMoved);
 
-        return sun.misc.Hashing.stringHash32((String) k);
+}
 
-    }
+elementData[--size]=null;
 
-    h ^= k.hashCode();
+return oldValue;
+</code></pre><p> <code>}</code></p>
+<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
+<p>我们再看get的源码:</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>rangeCheck(index);
 
-    // This function ensures that hashCodes that differ only by
+checkForComodification();
 
-    // constant multiples at each bit position have a bounded
+return ArrayList.this.elementData(offset+index);
+</code></pre><p><code>}</code></p>
+<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
+<p><code>public E set(int index,E e){</code></p>
+<pre><code>rangeCheck(index);
 
-    // number of collisions (approximately 8 at default load factor).
+checkForComodification();
 
-    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
+E oldValue = Array.this.elementData(offset + index);
 
-    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+ArrayList.this.elementData[offset +index]=e;
 
-`}`
-</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
-<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
+return oldValue;
+</code></pre><p><code>}</code></p>
+<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
+<p>contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)&gt;=0;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>if(o==null){
 
-    int newCapacity = newTable.length;
+     for(int i=0;i&lt;size;i++){
 
-    for (Entry&lt;K,V&gt; e : table) {
+          if(elementData[i]==null)
 
-        while(null != e) {
+               return i;
 
-            Entry&lt;K,V&gt; next = e.next;
+     }
 
-            if (rehash) {
+}else {
 
-                e.hash = null == e.key ? 0 : hash(e.key);
+     for(int i=0;i&lt;size;i++){
 
-            }
+          if(o.equals(elementData[i))
 
-            int i = indexFor(e.hash, newCapacity);
+               return i;
 
-            e.next = newTable[i];
+     }
 
-            newTable[i] = e;
+}
 
-            e = next;
+return -1;
+</code></pre><p><code>}</code></p>
+<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
+<p>还有clone的源码：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>try{
 
-        }
+     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
 
-    }
+     v.elementData = Arrays.copyof(elementData,size);
 
-`}`
-</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
-<p>以上中的Entry的结构是：</p>
-<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
-<pre><code>final K key;
+     v.modCount = 0;
 
-V value;
+}catch(CloneNotSupportedException e){
 
-Entry&lt;K,V&gt; next;
-
-int hash;
-</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
-<pre><code>    value = v;
-
-    next = n;
-
-    key = k;
-
-    hash = h;
+     throw new InternalError();
 
 }
 </code></pre><p><code>}</code></p>
+<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
 ]]></content>
       
         <categories>
@@ -1843,9 +1916,9 @@ int hash;
         
         <tags>
             
-            <tag> 源码 </tag>
+            <tag> java </tag>
             
-            <tag> hashMap </tag>
+            <tag> 源码 </tag>
             
         </tags>
         
