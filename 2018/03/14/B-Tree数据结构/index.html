@@ -81,13 +81,13 @@
 
 
 
-<meta name="description" content="1.定义B-tree即为B树，B即为Balanced B-tree是一种多路搜索树（不一定是二叉的） 一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树）。它或者是空树，或者是满足下列性质的树： 1.根结点至少有两个子女">
+<meta name="description" content="1.定义B-tree即为B树，B即为Balanced B-tree是一种多路搜索树（不一定是二叉的） 一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树，m阶B树又可称为m/2度B树，度和阶是分别描述树的方式）。它或者是空树，或者是满足下列性质的树： 1.根结点至少有两个子女">
 <meta name="keywords" content="Tree，数据结构">
 <meta property="og:type" content="article">
 <meta property="og:title" content="B-Tree数据结构">
 <meta property="og:url" content="http://yoursite.com/2018/03/14/B-Tree数据结构/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="1.定义B-tree即为B树，B即为Balanced B-tree是一种多路搜索树（不一定是二叉的） 一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树）。它或者是空树，或者是满足下列性质的树： 1.根结点至少有两个子女">
+<meta property="og:description" content="1.定义B-tree即为B树，B即为Balanced B-tree是一种多路搜索树（不一定是二叉的） 一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树，m阶B树又可称为m/2度B树，度和阶是分别描述树的方式）。它或者是空树，或者是满足下列性质的树： 1.根结点至少有两个子女">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2018/03/14/B-Tree数据结构/20150906171641792.jpg">
 <meta property="og:image" content="http://yoursite.com/2018/03/14/B-Tree数据结构/20150906171720873.jpg">
@@ -98,10 +98,10 @@
 <meta property="og:image" content="http://yoursite.com/2018/03/14/B-Tree数据结构/20150906172038313.jpg">
 <meta property="og:image" content="http://yoursite.com/2018/03/14/B-Tree数据结构/20150906172114106.jpg">
 <meta property="og:image" content="http://yoursite.com/2018/03/14/B-Tree数据结构/20150906172428271.jpg">
-<meta property="og:updated_time" content="2018-03-14T09:41:45.000Z">
+<meta property="og:updated_time" content="2018-03-15T07:11:41.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="B-Tree数据结构">
-<meta name="twitter:description" content="1.定义B-tree即为B树，B即为Balanced B-tree是一种多路搜索树（不一定是二叉的） 一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树）。它或者是空树，或者是满足下列性质的树： 1.根结点至少有两个子女">
+<meta name="twitter:description" content="1.定义B-tree即为B树，B即为Balanced B-tree是一种多路搜索树（不一定是二叉的） 一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树，m阶B树又可称为m/2度B树，度和阶是分别描述树的方式）。它或者是空树，或者是满足下列性质的树： 1.根结点至少有两个子女">
 <meta name="twitter:image" content="http://yoursite.com/2018/03/14/B-Tree数据结构/20150906171641792.jpg">
 
 
@@ -366,7 +366,7 @@
       
         <h2 id="1-定义"><a href="#1-定义" class="headerlink" title="1.定义"></a>1.定义</h2><p>B-tree即为B树，B即为Balanced</p>
 <p>B-tree是一种多路搜索树（不一定是二叉的）</p>
-<p>一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树）。它或者是空树，或者是满足下列性质的树：</p>
+<p>一颗m阶B树是一颗平衡的m路搜索树（m阶是指B树中每个结点至多具有M棵子树，m阶B树又可称为m/2度B树，度和阶是分别描述树的方式）。它或者是空树，或者是满足下列性质的树：</p>
 <p>1.根结点至少有两个子女</p>
 <a id="more"></a>
 <p>2.每个非根结点所包含的关键字个数j满足：m/2-1 &lt;=j&lt;= m-1;</p>
@@ -450,6 +450,10 @@
 
           <div class="post-nav-prev post-nav-item">
             
+              <a href="/2018/03/15/B+树数据结构/" rel="prev" title="B+树数据结构">
+                B+树数据结构 <i class="fa fa-chevron-right"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -529,7 +533,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-count">20</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -551,7 +555,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-count">21</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
