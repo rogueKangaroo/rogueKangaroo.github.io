@@ -95,10 +95,10 @@
 <meta property="og:image" content="http://yoursite.com/2018/03/15/B+树数据结构/990532-20170117134820692-680638285.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/15/B+树数据结构/990532-20170117135001442-1547516540.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/15/B+树数据结构/屏幕快照%202018-03-15%20下午6.07.37.png">
-<meta property="og:image" content="http://yoursite.com/Users/liukaizhao/截图/屏幕快照%202018-03-15%20下午6.13.16.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/15/B+树数据结构/屏幕快照%202018-03-15%20下午6.13.16.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/15/B+树数据结构/屏幕快照%202018-03-15%20下午6.17.31.png">
 <meta property="og:image" content="http://yoursite.com/2018/03/15/B+树数据结构/屏幕快照%202018-03-15%20下午7.09.17.png">
-<meta property="og:updated_time" content="2018-03-15T11:11:04.000Z">
+<meta property="og:updated_time" content="2018-03-15T11:19:09.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="B+树数据结构">
 <meta name="twitter:description" content="定义B+树是应文件系统所需而出的一种B树的变形树。一棵m阶的B+树和m阶的B树的差异在于： 1.如果此B+树的序数（度数）为d,则除了根之外的每个结点都包含最少d/2个元素最多d-1个元素，对于任意的结点有最多d个子指针。对于所有内部结点，子指针的数目总是比元素的数目多一个。（每个内部结点的元素充当分开它的子树的分离值。">
@@ -387,7 +387,7 @@
 <p>1.以下图为例：</p>
 <p><img src="/2018/03/15/B+树数据结构/屏幕快照 2018-03-15 下午6.07.37.png" alt="屏幕快照 2018-03-15 下午6.07.37"></p>
 <p>2.删除键值为70这条记录</p>
-<p><img src="/Users/liukaizhao/截图/屏幕快照 2018-03-15 下午6.13.16.png" alt="屏幕快照 2018-03-15 下午6.13.16"></p>
+<p> <img src="/2018/03/15/B+树数据结构/屏幕快照 2018-03-15 下午6.13.16.png" alt="屏幕快照 2018-03-15 下午6.13.16"></p>
 <p>3.删除键值为25的记录，虽然包含25的叶子大于fill factor，但是不同的是该值还在Index Page中的值，因此再删除Leaf Page中的25的值后，还应将25的右兄弟结点的28更新到Page Index中</p>
 <p><img src="/2018/03/15/B+树数据结构/屏幕快照 2018-03-15 下午6.17.31.png" alt="屏幕快照 2018-03-15 下午6.17.31"></p>
 <p>4.删除键值为60的记录，因为Leaf Page删除60之后，填充因子小于50%,这是需要做合并操作，同样，再删除Index Page中相关记录后需要做Index Page的合并操作</p>
