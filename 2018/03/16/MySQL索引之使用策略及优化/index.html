@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/favicon.ico?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="MySQL,索引," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="有态度" type="application/atom+xml" />
+
+
+
+
+
+
+<meta name="description" content="优化分类及示例数据库参考文章地址：http://blog.codinglabs.org/articles/theory-of-mysql-index.html MySQL的优化只要分为结构优化和查询优化。 示例数据库为了讨论索引策略，需要一个数据量不算小的数据库作为示例。本文选择MySQL官方文档中提供的示例数据库之一">
+<meta name="keywords" content="MySQL,索引">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL索引之使用策略及优化">
+<meta property="og:url" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/index.html">
+<meta property="og:site_name" content="有态度">
+<meta property="og:description" content="优化分类及示例数据库参考文章地址：http://blog.codinglabs.org/articles/theory-of-mysql-index.html MySQL的优化只要分为结构优化和查询优化。 示例数据库为了讨论索引策略，需要一个数据量不算小的数据库作为示例。本文选择MySQL官方文档中提供的示例数据库之一：employees。这个数据库关系复杂度适中，且数据量较大。下图是这个数据库的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/12.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.36.45.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.41.02.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.44.00.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.45.01.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.49.39.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.55.35.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午4.57.23.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.03.27.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.06.48.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.08.31.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.10.45.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.27.51.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.31.07.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.37.21.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.52.49.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.57.21.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.57.58.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.59.03.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午5.59.37.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午6.00.15.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午6.01.01.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/屏幕快照%202018-03-16%20下午6.01.33.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/13.png">
+<meta property="og:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/14.png">
+<meta property="og:updated_time" content="2018-03-16T10:04:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL索引之使用策略及优化">
+<meta name="twitter:description" content="优化分类及示例数据库参考文章地址：http://blog.codinglabs.org/articles/theory-of-mysql-index.html MySQL的优化只要分为结构优化和查询优化。 示例数据库为了讨论索引策略，需要一个数据量不算小的数据库作为示例。本文选择MySQL官方文档中提供的示例数据库之一：employees。这个数据库关系复杂度适中，且数据量较大。下图是这个数据库的">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/12.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/"/>
+
+
+
+
+
+  <title>MySQL索引之使用策略及优化 | 有态度</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">有态度</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">阅读，学习，思考，写作，独立</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-bars"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/16/MySQL索引之使用策略及优化/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">MySQL索引之使用策略及优化</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-16T16:09:31+08:00">
+                2018-03-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="优化分类及示例数据库"><a href="#优化分类及示例数据库" class="headerlink" title="优化分类及示例数据库"></a>优化分类及示例数据库</h2><p>参考文章地址：<a href="http://blog.codinglabs.org/articles/theory-of-mysql-index.html" target="_blank" rel="noopener">http://blog.codinglabs.org/articles/theory-of-mysql-index.html</a></p>
+<p>MySQL的优化只要分为结构优化和查询优化。</p>
+<h4 id="示例数据库"><a href="#示例数据库" class="headerlink" title="示例数据库"></a>示例数据库</h4><p>为了讨论索引策略，需要一个数据量不算小的数据库作为示例。本文选择MySQL官方文档中提供的示例数据库之一：employees。这个数据库关系复杂度适中，且数据量较大。下图是这个数据库的E-R关系图：</p>
+<a id="more"></a>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/12.png" alt="12"></p>
+<p>MySQL官方文档中关于此数据库的页面为<a href="http://dev.mysql.com/doc/employee/en/employee.html" target="_blank" rel="noopener">http://dev.mysql.com/doc/employee/en/employee.html</a>，里面详细介绍了此数据库，并提供了下载地址和导入方法。</p>
+<h4 id="最左前缀原理与相关优化"><a href="#最左前缀原理与相关优化" class="headerlink" title="最左前缀原理与相关优化"></a>最左前缀原理与相关优化</h4><p>高效使用索引的首要条件是知道什么样的查询会使用索引，这个问题和B+Tree中的“最左前缀原理”有关，下面通过例子说明最左前缀原理。</p>
+<p>这里先说一下联合索引的概念。在上文中，我们都是假设索引只引用了单个的列，实际上，MySQL中的索引可以以一定的顺序引用多个列，这种索引叫做联合索引，一般的，一个联合索引是一个有序元组<a1,a2,....an>,其中各个元素均为数据表的一列，实际上要严格定义索引需要用到的关系代数，但是这里不讨论太多关系代数的话题，单列索引可以看成联合索引元素数为1的特例。</a1,a2,....an></p>
+<p>以employees.titles表为例，下面先查看其上都有哪些索引：</p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.36.45.png" alt="屏幕快照 2018-03-16 下午4.36.45"></p>
+<p>从结果中可以看到titles表的主索引为<emp_no,title,from_date>,还有一个辅助索引<emp_no>。为了避免多个索引使事情变得复杂（MySQL的SQL优化器在多索引时行为比较复杂），这里我们将附注索引drop掉，专心分析索引PRIMARY的行为。</emp_no></emp_no,title,from_date></p>
+<h5 id="情况一：全列匹配"><a href="#情况一：全列匹配" class="headerlink" title="情况一：全列匹配"></a>情况一：全列匹配</h5><p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.41.02.png" alt="屏幕快照 2018-03-16 下午4.41.02"></p>
+<p>很明显，当按照索引中所有列进行精确匹配时，索引可以被用到。这里有一点需要注意，理论上索引对顺序是敏感的，但是由于MySQL的查询优化器会自动调整where子句的条件顺序以使用适合的索引，例如我们将where中的条件顺序颠倒：</p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.44.00.png" alt="屏幕快照 2018-03-16 下午4.44.00"></p>
+<p>效果是一样的。</p>
+<h5 id="情况二：最左前缀匹配"><a href="#情况二：最左前缀匹配" class="headerlink" title="情况二：最左前缀匹配"></a>情况二：最左前缀匹配</h5><p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.45.01.png" alt="屏幕快照 2018-03-16 下午4.45.01"></p>
+<p>当查询条件精确匹配索引的左边连续一个或几个列时，如<emp_no>或<emp_no,titile>，所以可以被用到，但是只能用到一部分，即条件所组成的最左前缀。上面的查询从分析结果中看到用了PRIMARY索引，但是key_len为4，说明只用到了索引的第一列前缀。</emp_no,titile></emp_no></p>
+<h5 id="情况三：查询条件用到了索引中列的精确匹配，但是中间某个条件未提供。"><a href="#情况三：查询条件用到了索引中列的精确匹配，但是中间某个条件未提供。" class="headerlink" title="情况三：查询条件用到了索引中列的精确匹配，但是中间某个条件未提供。"></a>情况三：查询条件用到了索引中列的精确匹配，但是中间某个条件未提供。</h5><p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.49.39.png" alt="屏幕快照 2018-03-16 下午4.49.39"></p>
+<p>此时索引使用情况和情况二相同，因为title未提供，所以查询只用到了索引的第一列，而后面的from_date虽然也在索引中，但是由于title不存在而无法和左前缀连接，因此需要对结果进行扫描过滤from_date。如果想让from_date也使用索引而不是where过滤，可以增加一个辅助索引<emp_no,from_date>，此时上面的查询会使用这个索引。除此之外，还可以使用一种称之为“隔离列”的优化方法，将emp_no与from_date之间的“坑”填上。</emp_no,from_date></p>
+<p>首先我们看一下title一共有几种不同的值： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.55.35.png" alt="屏幕快照 2018-03-16 下午4.55.35"></p>
+<p>只有7种。在这种成为“坑”的列值比较少的情况下，可以考虑用IN来填补这个“坑”从而形成最左前缀：</p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午4.57.23.png" alt="屏幕快照 2018-03-16 下午4.57.23"></p>
+<p>这次key_len为59，说明索引被用全了，但是从type和rows看出IN实际上执行了一个range查询，这里检查了7个key。看下两种查询的性能比较：</p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.03.27.png" alt="屏幕快照 2018-03-16 下午5.03.27"></p>
+<p>“填坑”后性能提升了一点。如果经过emp_no筛选后余下很多数据，则后者性能优势会更加明显。当然title的值很多，用填坑就不合适了，必须建立辅助索引。</p>
+<h5 id="情况四：查询条件没有指定索引第一列"><a href="#情况四：查询条件没有指定索引第一列" class="headerlink" title="情况四：查询条件没有指定索引第一列 "></a>情况四：查询条件没有指定索引第一列 <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.06.48.png" alt="屏幕快照 2018-03-16 下午5.06.48"></h5><p>由于不是最左前缀，索引这样的查询显然用不到索引</p>
+<h5 id="情况五：匹配某列的前缀字符串"><a href="#情况五：匹配某列的前缀字符串" class="headerlink" title="情况五：匹配某列的前缀字符串 "></a>情况五：匹配某列的前缀字符串 <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.08.31.png" alt="屏幕快照 2018-03-16 下午5.08.31"></h5><p>此时可以用到索引，如果通配符%不出现在开头，则可以用到索引，但根据具体情况不同可能只会用其中一个前缀。</p>
+<h5 id="情况六：范围查询"><a href="#情况六：范围查询" class="headerlink" title="情况六：范围查询 "></a>情况六：范围查询 <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.10.45.png" alt="屏幕快照 2018-03-16 下午5.10.45"></h5><p>范围列可以用到索引（必须是最左前缀），但是范围列后面的列无法用到索引。同时，索引最多用于一个范围列，因此如果查询条件中有两个范围列则无法全用到索引。 <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.27.51.png" alt="屏幕快照 2018-03-16 下午5.27.51"></p>
+<p>可以看到索引对第二个范围索引无能为力。这里特别要说明MySQL一个有意思的地方，那就是仅用explain可能无法区分范围索引和多值匹配，因为在type中这两者都显示为range。同时，用了“between”并不意味着就是范围查询，例如下面的查询：</p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.31.07.png" alt="屏幕快照 2018-03-16 下午5.31.07"></p>
+<p>看起来是用来两个范围查询，但作用于emp_no上的“BETWEEN”实际上相当于“IN”，也就是说emp_no实际是多值精确匹配。可以看到这个查询用到了索引全部三个列。因此在MySQL中要谨慎地区分多值匹配和范围匹配，否则会对MySQL的行为产生困惑。</p>
+<h5 id="情况七：查询条件中含有函数或表达式"><a href="#情况七：查询条件中含有函数或表达式" class="headerlink" title="情况七：查询条件中含有函数或表达式"></a>情况七：查询条件中含有函数或表达式</h5><p>很不幸，如果查询条件中含有函数或表达式，则MySQL不会为这列使用索引。例如： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.37.21.png" alt="屏幕快照 2018-03-16 下午5.37.21"></p>
+<p>虽然这个查询和情况五中功能相同，但是由于使用了函数left,则无法为title列应用索引，而情况五中用Like则可以。再如： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.52.49.png" alt="屏幕快照 2018-03-16 下午5.52.49"></p>
+<p>显然这个查询等价于查询emp_no为10001的函数，但是由于查询条件是一个表达式，MySQL无法为其使用索引。看来MySQL还没有智能到自动优化常量表达式的程度，因此在写查询语句时尽量避免表达式出现在查询中，而是先手动代数运算，转换为无表达式的查询语句。</p>
+<h4 id="索引选择性与前缀索引"><a href="#索引选择性与前缀索引" class="headerlink" title="索引选择性与前缀索引"></a>索引选择性与前缀索引</h4><p>既然索引可以加快查询速度，那么是不是只要是查询语句需要，就建上索引？答案是否定的。因为索引虽然加快了查询速度，但索引也是有代价的：索引文件本身要消耗存储空间，同时索引会加重插入、删除和修改记录时的负担，另外，MySQL在运行时也要消耗资源维护索引，因此索引并不是越多越好。一般两种情况下不建议建索引。</p>
+<p>第一种情况是表记录比较少，例如一两千条甚至只有几百条记录的表，没必要建索引，让查询做全表扫描就好了。至于多少条记录才算多，这个个人有个人的看法，我个人的经验是以2000作为分界线，记录数不超过 2000可以考虑不建索引，超过2000条可以酌情考虑索引。</p>
+<p>另一种不建议建索引的情况是索引的选择性较低。所谓索引的选择性（Selectivity），是指不重复的索引值（也叫基数，Cardinality）与表记录数（#T）的比值：</p>
+<p>Index Selectivity = Cardinality / #T</p>
+<p>显然选择性的取值范围为(0, 1]，选择性越高的索引价值越大，这是由B+Tree的性质决定的。例如，上文用到的employees.titles表，如果title字段经常被单独查询，是否需要建索引，我们看一下它的选择性： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.57.21.png" alt="屏幕快照 2018-03-16 下午5.57.21"></p>
+<p>title的选择性不足0.0001（精确值为0.00001579），所以实在没有什么必要为其单独建索引。</p>
+<p>有一种与索引选择性有关的索引优化策略叫做前缀索引，就是用列的前缀代替整个列作为索引key，当前缀长度合适时，可以做到既使得前缀索引的选择性接近全列索引，同时因为索引key变短而减少了索引文件的大小和维护开销。下面以employees.employees表为例介绍前缀索引的选择和使用。</p>
+<p>从图中可以看到employees表只有一个索引<emp_no>，那么如果我们想按名字搜索一个人，就只能全表扫描了： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.57.58.png" alt="屏幕快照 2018-03-16 下午5.57.58"></emp_no></p>
+<p>如果频繁按名字搜索员工，这样显然效率很低，因此我们可以考虑建索引。有两种选择，建<first_name>或<first_name, last_name="">，看下两个索引的选择性： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.59.03.png" alt="屏幕快照 2018-03-16 下午5.59.03"></first_name,></first_name></p>
+<p><first_name>显然选择性太低，<first_name, last_name="">选择性很好，但是first_name和last_name加起来长度为30，有没有兼顾长度和选择性的办法？可以考虑用first_name和last_name的前几个字符建立索引，例如<first_name, left(last_name,="" 3)="">，看看其选择性：</first_name,></first_name,></first_name></p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午5.59.37.png" alt="屏幕快照 2018-03-16 下午5.59.37"></p>
+<p>选择性还不错，但离0.9313还是有点距离，那么把last_name前缀加到4： <img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午6.00.15.png" alt="屏幕快照 2018-03-16 下午6.00.15"></p>
+<p>这时选择性已经很理想了，而这个索引的长度只有18，比<first_name, last_name="">短了接近一半，我们把这个前缀索引 建上：</first_name,></p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午6.01.01.png" alt="屏幕快照 2018-03-16 下午6.01.01"></p>
+<p>此时再执行一遍按名字查询，比较分析一下与建索引前的结果：</p>
+<p><img src="/2018/03/16/MySQL索引之使用策略及优化/屏幕快照 2018-03-16 下午6.01.33.png" alt="屏幕快照 2018-03-16 下午6.01.33"></p>
+<p>性能的提升是显著的，查询速度提高了120多倍。</p>
+<p>前缀索引兼顾索引大小和查询速度，但是其缺点是不能用于ORDER BY和GROUP BY操作，也不能用于Covering index（即当索引本身包含查询所需全部数据时，不再访问数据文件本身）。</p>
+<h4 id="InnoDB的主键选择与插入优化"><a href="#InnoDB的主键选择与插入优化" class="headerlink" title="InnoDB的主键选择与插入优化"></a>InnoDB的主键选择与插入优化</h4><p>在使用InnoDB存储引擎时，如果没有特别的需要，请永远使用一个与业务无关的自增字段作为主键。</p>
+<p>经常看到有帖子或博客讨论主键选择问题，有人建议使用业务无关的自增主键，有人觉得没有必要，完全可以使用如学号或身份证号这种唯一字段作为主键。不论支持哪种论点，大多数论据都是业务层面的。如果从数据库索引优化角度看，使用InnoDB引擎而不使用自增主键绝对是一个糟糕的主意。</p>
+<p>上文讨论过InnoDB的索引实现，InnoDB使用聚集索引，数据记录本身被存于主索引（一颗B+Tree）的叶子节点上。这就要求同一个叶子节点内（大小为一个内存页或磁盘页）的各条数据记录按主键顺序存放，因此每当有一条新的记录插入时，MySQL会根据其主键将其插入适当的节点和位置，如果页面达到装载因子（InnoDB默认为15/16），则开辟一个新的页（节点）。</p>
+<p>如果表使用自增主键，那么每次插入新的记录，记录就会顺序添加到当前索引节点的后续位置，当一页写满，就会自动开辟一个新的页。如下图所示： <img src="/2018/03/16/MySQL索引之使用策略及优化/13.png" alt="13"></p>
+<p>这样就会形成一个紧凑的索引结构，近似顺序填满。由于每次插入时也不需要移动已有数据，因此效率很高，也不会增加很多开销在维护索引上。</p>
+<p>如果使用非自增主键（如果身份证号或学号等），由于每次插入主键的值近似于随机，因此每次新纪录都要被插到现有索引页得中间某个位置： <img src="/2018/03/16/MySQL索引之使用策略及优化/14.png" alt="14"></p>
+<p>此时MySQL不得不为了将新记录插到合适位置而移动数据，甚至目标页面可能已经被回写到磁盘上而从缓存中清掉，此时又要从磁盘上读回来，这增加了很多开销，同时频繁的移动、分页操作造成了大量的碎片，得到了不够紧凑的索引结构，后续不得不通过OPTIMIZE TABLE来重建表并优化填充页面。</p>
+<p>因此，只要可以，请尽量在InnoDB上采用自增字段做主键。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+
+      </div>
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+            <a href="/tags/索引/" rel="tag"># 索引</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/16/MySQL索引之MyISAM和InnoDB存储引擎/" rel="next" title="MySQL索引之MyISAM和InnoDB存储引擎">
+                <i class="fa fa-chevron-left"></i> MySQL索引之MyISAM和InnoDB存储引擎
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <!-- <div class="post-spread">
+      
+    </div> -->
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/headimg.jpeg"
+                alt="刘凯召" />
+            
+              <p class="site-author-name" itemprop="name">刘凯召</p>
+              <p class="site-description motion-element" itemprop="description">态度决定深度</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#优化分类及示例数据库"><span class="nav-number">1.</span> <span class="nav-text">优化分类及示例数据库</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#示例数据库"><span class="nav-number">1.0.1.</span> <span class="nav-text">示例数据库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#最左前缀原理与相关优化"><span class="nav-number">1.0.2.</span> <span class="nav-text">最左前缀原理与相关优化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#情况一：全列匹配"><span class="nav-number">1.0.2.1.</span> <span class="nav-text">情况一：全列匹配</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#情况二：最左前缀匹配"><span class="nav-number">1.0.2.2.</span> <span class="nav-text">情况二：最左前缀匹配</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#情况三：查询条件用到了索引中列的精确匹配，但是中间某个条件未提供。"><span class="nav-number">1.0.2.3.</span> <span class="nav-text">情况三：查询条件用到了索引中列的精确匹配，但是中间某个条件未提供。</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#情况四：查询条件没有指定索引第一列"><span class="nav-number">1.0.2.4.</span> <span class="nav-text">情况四：查询条件没有指定索引第一列 </span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#情况五：匹配某列的前缀字符串"><span class="nav-number">1.0.2.5.</span> <span class="nav-text">情况五：匹配某列的前缀字符串 </span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#情况六：范围查询"><span class="nav-number">1.0.2.6.</span> <span class="nav-text">情况六：范围查询 </span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#情况七：查询条件中含有函数或表达式"><span class="nav-number">1.0.2.7.</span> <span class="nav-text">情况七：查询条件中含有函数或表达式</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#索引选择性与前缀索引"><span class="nav-number">1.0.3.</span> <span class="nav-text">索引选择性与前缀索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#InnoDB的主键选择与插入优化"><span class="nav-number">1.0.4.</span> <span class="nav-text">InnoDB的主键选择与插入优化</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">刘凯召</span>
+
+  
+</div>
+
+
+  <div class="powered-by">
+       <i class="fa fa-user-md"></i>
+       <span id="busuanzi_container_site_uv">本站访客数：<span id="busuanzi_value_site_uv"></span> | 访问量：<span id="busuanzi_value_site_pv"></span></span>
+  </div>  
+
+  <!-- <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div> -->
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+ <!-- <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div> -->
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <script type="text/javascript" src="//cdn.bootcss.com/canvas-nest.js/1.0.0/canvas-nest.min.js"></script>
+  
+</body>
+</html>
