@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-03-16T06:48:22.000Z</updated>
+  <updated>2018-03-16T08:00:42.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>MySQL索引之MyISAM和InnoDB存储引擎</title>
+    <link href="http://yoursite.com/2018/03/16/MySQL%E7%B4%A2%E5%BC%95%E4%B9%8BMyISAM%E5%92%8CInnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/"/>
+    <id>http://yoursite.com/2018/03/16/MySQL索引之MyISAM和InnoDB存储引擎/</id>
+    <published>2018-03-16T06:54:44.000Z</published>
+    <updated>2018-03-16T08:00:42.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="MyISAM索引实现"><a href="#MyISAM索引实现" class="headerlink" title="MyISAM索引实现"></a>MyISAM索引实现</h2><p>MyISAM引擎使用B+Tree作为索引结构，叶子结点的data域存放的是数据记录的地址。下图是MyISAM索引的原理图：</p><p> <img src="/2018/03/16/MySQL索引之MyISAM和InnoDB存储引擎/8.png" alt="8"></p><p>这里设表一共有三列，假设我们以Col1为主键，则上图是一个MyISAM表的主索引示意。可以看出MyISAM的索引文件仅仅保存数据记录的地址。在MyISAM中，主索引和辅助索引在结构上没有任何区别，只是主索引要求key是唯一的，而辅助索引的key可以重复。如果我们在Col2上建立一个辅助索引，则此索引的结构如下图所示：</p><p> <img src="/2018/03/16/MySQL索引之MyISAM和InnoDB存储引擎/9.png" alt="9"></p><p>同样也是一颗B+Tree，data域保存数据记录的地址。因此，MyISAM中索引检索的算法为首先按照B+Tree搜索算法搜索索引，如果指定的key存在，则取出其data域的值，然后以data域的值为地址，读取相应数据记录。</p><p>MyISAM的索引方式也叫做“非聚集”的，之所以这么称呼是为了与InnoDB的聚集索引区分。</p><h2 id="InnoDB索引实现"><a href="#InnoDB索引实现" class="headerlink" title="InnoDB索引实现"></a>InnoDB索引实现</h2><p>InnoDB使用B+Tree作为索引结构，但具体实现方式与MyISAM截然不同</p><p>最大区别在于InnoDB的数据文件本身就是索引文件。从上文知道，MyISAM索引文件和数据文件是分离的，索引文件仅保存数据记录的地址。而在InnoDB中，表数据文件本身就是按B+Tree组织的一个索引结构，这棵树的叶节点data域保存了完整的数据记录。这个索引的key是数据表的主键，因此InnoDB表数据文件本身就是主索引。 <img src="/2018/03/16/MySQL索引之MyISAM和InnoDB存储引擎/10.png" alt="10"></p><p>上图是InnoDB主索引（同时也是数据文件）的示意图，可以看到叶子结点包含了完整的数据记录。这种索引叫做聚集索引。因为InnoDB的数据文件本身要按照主键聚集，如果不存在这种列，则MySQL自动为InnoDB表生成一个隐含字段作为主键，这个字段长度为6个字节，类型为长整型。</p><p>第二个与MyISAM索引的不同是InnoDB的辅助索引data域存储相应记录主键的值而不是地址。换句话说，InnoDB的所有辅助索引都引用主键作为data域。例如，下图为定义在Col3上的一个辅助索引：</p><p> <img src="/2018/03/16/MySQL索引之MyISAM和InnoDB存储引擎/11.png" alt="11"></p><p>这里是以英文字符的ASCII码作为比较准则。聚集索引这种实现方式使得按住键的搜索十分高效，但是辅助索引需要检索两遍索引：首先检索辅助索引获得主键，然后用主键到主索引中检索获得记录。根据InnoDB的实现原理，我们可以明白当使用该索引时，不建议使用过长的字段作为主键，因为所有辅助索引都引用主索引，过长的主索引会令辅助索引变得过大；再比如，用非单调的字段作为主键在InnoDB中不是个好主意，因为InnoDB数据文件本身是一颗B+Tree，非单调的主键会造成在插入新纪录时数据文件为了维持B+Tree的特性儿频繁的分裂调整，十分低效，而使用自增字段作为主键则是一个很好的选择。</p><p>参考文章地址：<a href="http://blog.codinglabs.org/articles/theory-of-mysql-index.html" target="_blank" rel="noopener">http://blog.codinglabs.org/articles/theory-of-mysql-index.html</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;MyISAM索引实现&quot;&gt;&lt;a href=&quot;#MyISAM索引实现&quot; class=&quot;headerlink&quot; title=&quot;MyISAM索引实现&quot;&gt;&lt;/a&gt;MyISAM索引实现&lt;/h2&gt;&lt;p&gt;MyISAM引擎使用B+Tree作为索引结构，叶子结点的data域存放的是数
+      
+    
+    </summary>
+    
+    
+      <category term="MySQL" scheme="http://yoursite.com/tags/MySQL/"/>
+    
+      <category term="索引" scheme="http://yoursite.com/tags/%E7%B4%A2%E5%BC%95/"/>
+    
+  </entry>
   
   <entry>
     <title>MySQL索引之数据结构及应用原理</title>
@@ -353,28 +378,6 @@
   </entry>
   
   <entry>
-    <title>JVM内存模型</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/</id>
-    <published>2017-11-30T03:50:00.000Z</published>
-    <updated>2017-11-30T03:55:22.000Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p><a id="more"></a><p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p><h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p><p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p><p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p><h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p><h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;h3 id=&quot;程序计数器（线程私有的）&quot;&gt;&lt;a href=&quot;#程序计数器（线程私有的）&quot; class=&quot;headerlink&quot; title=&quot;程序计数器（线程私有的）&quot;&gt;&lt;/a&gt;程序计数器（线程私有的）&lt;/h3&gt;&lt;p&gt;程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="JVM" scheme="http://yoursite.com/categories/JVM/"/>
-    
-    
-      <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
-    
-  </entry>
-  
-  <entry>
     <title>jstack及dump文件分析</title>
     <link href="http://yoursite.com/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/"/>
     <id>http://yoursite.com/2017/11/30/2017-11-30--jstack及dump文件分析/</id>
@@ -398,6 +401,55 @@
       <category term="调优" scheme="http://yoursite.com/tags/%E8%B0%83%E4%BC%98/"/>
     
       <category term="jstack" scheme="http://yoursite.com/tags/jstack/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>JVM内存模型</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/</id>
+    <published>2017-11-30T03:50:00.000Z</published>
+    <updated>2017-11-30T03:55:22.000Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p><a id="more"></a><p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p><h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p><p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p><p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p><h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p><h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;程序计数器（线程私有的）&quot;&gt;&lt;a href=&quot;#程序计数器（线程私有的）&quot; class=&quot;headerlink&quot; title=&quot;程序计数器（线程私有的）&quot;&gt;&lt;/a&gt;程序计数器（线程私有的）&lt;/h3&gt;&lt;p&gt;程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="JVM" scheme="http://yoursite.com/categories/JVM/"/>
+    
+    
+      <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>spring aop源码分析</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/</id>
+    <published>2017-11-30T03:00:00.000Z</published>
+    <updated>2017-11-30T03:25:24.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>源码分析：</p><p>这里先描述aop的具体流程：</p><p>一、解析xml</p><p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p><a id="more"></a><p>2.在parse函数里面解析这个标签①加载一个bean，这个bean的功能是根据注解来给相应的bean创建代理②处理proxy-target-class属性，当这个属性为true时，创建的代理是CGLIB 代理，处理 expose-proxy这个属性，这个属性为true，允许用户通过上下文的方式实现类内部调用也能增强。</p><p>二、加载bean</p><p>1.初始化bean的时候，在bean initialize之后会调用postProcessObjectFromFactoryBean方法</p><p>2.该方法中调用wrapIfNecessary方法，该方法中有两个重要的步骤①getAdvicesAndAdvisorsForBean获取该bean的所有拦截器，这个方法中分几个步骤：获取beanFactory中所有的bean，遍历找出AspectJ注解的bean,获取bean中所有的拦截器，存到缓存中，然后找到适合当前bean的所有拦截器②创建代理createProxy,这个方法中会根据用户配置比如proxy-target-class，被代理类是否implement接口等等来决定是否用jdk代理还是CGLIB代理，然后创建相应代理。</p><p>这里讲解一下jdk代理和CGLIB代理的区别和两者的源码分析：</p><p>jdk代理：是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理</p><p>CGLIB代理：利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理</p><p>1.如果目标对象实现了接口，默认情况下采取jdk的动态代理</p><p>2.如果目标对象实现了接口，可以强制采用CGLIB代理</p><p>3.如果目标没有实现接口，只能采用CGLIB代理</p><p>jdk代理使用方法：</p><p><code>public interface Say {</code></p><pre><code>void say();</code></pre><p><code>}</code></p><p><code>public class SayImpl implements Say {</code></p><pre><code>@Overridepublic void say() {    System.out.println(&quot;say hello&quot;);}</code></pre><p><code>}</code></p><p><code>public class MyInvocationHandler implements InvocationHandler{</code></p><pre><code>private Object targetObject;@Overridepublic Object invoke(Object proxy, Method method, Object[] args) throws Throwable {    System.out.println(&quot;say before&quot;);    Object object = method.invoke(targetObject,args);    System.out.println(&quot;say after&quot;);    return object;}public Object newProxy(Object targetObject){    this.targetObject=targetObject;    return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(),targetObject.getClass().getInterfaces(),this);}</code></pre><p><code>}</code></p><p><code>public class TestJDKProxy {</code></p><pre><code>public static void main(String[] args){    MyInvocationHandler myInvocationHandler = new MyInvocationHandler();    Say say = (Say) myInvocationHandler.newProxy(new SayImpl());    say.say();}</code></pre><p><code>}</code></p><p>根据源码分析生成的代理类叫ProxyN，所以在生成代理之后，把这个类写到硬盘，通过以下这个方法：</p><p><code>public class Util {</code></p><pre><code>public static void writeProxyClassToHardDisk(String path){    byte[] classFile = ProxyGenerator.generateProxyClass(&quot;$Proxy0&quot;, SayImpl.class.getInterfaces());    FileOutputStream out = null;    try{        out = new FileOutputStream(path);        out.write(classFile);        out.flush();    }catch (Exception e){        e.printStackTrace();    }finally {        try{            out.close();        }catch (Exception e){            e.printStackTrace();        }    }}</code></pre><p><code>}</code></p><p>此时通过反编译生成的class文件，即可得到生成代理类的源码如下：</p><p><code>public final class $Proxy0 extends Proxy</code></p><p>   implements Say</p><p><code>{</code></p><p>   private static Method m3;</p><p>   private static Method m1;</p><p>   private static Method m0;</p><p>   private static Method m2;</p><p>   public $Proxy0(InvocationHandler invocationhandler)</p><p>   {</p><pre><code>super(invocationhandler);</code></pre><p>   }</p><p>   public final void say()</p><p>   {</p><pre><code>try{   super.h.invoke(this, m3, null);   return;}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final boolean equals(Object obj)</p><p>   {</p><pre><code>try{   return ((Boolean)super.h.invoke(this, m1, new Object[] {      obj   })).booleanValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final int hashCode()</p><p>   {</p><pre><code>try{   return ((Integer)super.h.invoke(this, m0, null)).intValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final String toString()</p><p>   {</p><pre><code>try{   return (String)super.h.invoke(this, m2, null);}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   static </p><p>   {</p><pre><code>try{   m3 = Class.forName(&quot;com.springapp.mvc.Proxy.jdkProxy.Say&quot;).getMethod(&quot;say&quot;, new Class[0]);   m1 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;equals&quot;, new Class[] {      Class.forName(&quot;java.lang.Object&quot;)   });   m0 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;hashCode&quot;, new Class[0]);   m2 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;toString&quot;, new Class[0]);}catch (NoSuchMethodException nosuchmethodexception){   throw new NoSuchMethodError(nosuchmethodexception.getMessage());}catch (ClassNotFoundException classnotfoundexception){   throw new NoClassDefFoundError(classnotfoundexception.getMessage());}</code></pre><p>   }</p><p><code>}</code></p><p>cglib代理的使用方法：</p><p><code>public class SayHello {</code></p><pre><code>public void say(){    System.out.println(&quot;hello everyone&quot;);}</code></pre><p><code>}</code></p><p><code>public class CglibProxy implements MethodInterceptor {</code></p><pre><code>private Enhancer enhancer = new Enhancer();public Object getProxy(Class clazz){    enhancer.setSuperclass(clazz);    enhancer.setCallback(this);    return enhancer.create();}@Overridepublic Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {    System.out.println(&quot;前置代理&quot;);    Object res = methodProxy.invokeSuper(o,objects);    System.out.println(&quot;后置处理&quot;);    return res;}</code></pre><p><code>}</code></p><p><code>public class DoCglib {</code></p><pre><code>public static void main(String[] args){    CglibProxy proxy = new CglibProxy();    SayHello proxyImpl = (SayHello)proxy.getProxy(SayHello.class);    proxyImpl.say();}</code></pre><p><code>}</code></p><p>spring中jdk代理的处理：</p><p>spring中的jdkDynamicAopProxy确实实现了InvocationHandler接口，其中也包含了getProxy和invoke。其中getProxy函数创建了代理，</p><p>invoke函数里面包含了AOP的核心逻辑，这个方法逻辑：</p><p>1.处理equals方法</p><p>2.处理hash方法</p><p>3.处理expose属性，当这个属性为true时，暴露代理来实现内部调用是能通过代理实现增强</p><p>4.获取当前方法的所有拦截器</p><p>5.如果没有拦截器,那么直接调用切点方法，如果有会将拦截器封装到ReflectiveMethodInvocation</p><p>6.调用ReflectiveMethodInvocation类中的proceed方法</p><p>7.proceed方法中维护了链接调用的计数器，记录当前调用链接的位置，他会根据传入的拦截器链获取要执行的拦截器，然后实例化InterceptorAndDynamicMethodMatcher,InterceptorAndDynamicMethodMatcher中有两个属性MethodInterceptor、MethodMatcher,这两个属性的作用分别是：MethodInterceptor是一个接口，所以他会根据传入不同的拦截器来分发给不同的继承类来实现具体逻辑，比如传入前置拦截器，具体实现则交给了MethodBeforeAdviceInterceptor，在这个类invoke（会传入当前类当参数）方法中会先调用MethodBeforeAdvice的before方法，然后再调用传入类的proceed方法，以此循环，最终执行完拦截器链中的所有拦截器；MethodMatcher是方法匹配器，来检查当前拦截器是否适用当前方法，如果适用则执行拦截器，不适用则略过当前拦截器。</p><p>spring中cglib代理的处理：</p><p>三、调用方法</p><p>jdk代理：由于生成了代理匿名类，所以当调用被代理类的某个方法时，会调用代理类中的invoke方法，具体实现上面已经讲到了。</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;源码分析：&lt;/p&gt;
+&lt;p&gt;这里先描述aop的具体流程：&lt;/p&gt;
+&lt;p&gt;一、解析xml&lt;/p&gt;
+&lt;p&gt;1.加载xml资源文件时解析&lt;aop:aspectj-autoproxy expose-proxy=&quot;true&quot; proxy-target-class=&quot;true&quot;&gt;&lt;/aop:aspectj-autoproxy&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
+    
+    
+      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
+    
+      <category term="spring" scheme="http://yoursite.com/tags/spring/"/>
     
   </entry>
   
@@ -426,33 +478,6 @@
       <category term="java" scheme="http://yoursite.com/tags/java/"/>
     
       <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>spring aop源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/</id>
-    <published>2017-11-30T03:00:00.000Z</published>
-    <updated>2017-11-30T03:25:24.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>源码分析：</p><p>这里先描述aop的具体流程：</p><p>一、解析xml</p><p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p><a id="more"></a><p>2.在parse函数里面解析这个标签①加载一个bean，这个bean的功能是根据注解来给相应的bean创建代理②处理proxy-target-class属性，当这个属性为true时，创建的代理是CGLIB 代理，处理 expose-proxy这个属性，这个属性为true，允许用户通过上下文的方式实现类内部调用也能增强。</p><p>二、加载bean</p><p>1.初始化bean的时候，在bean initialize之后会调用postProcessObjectFromFactoryBean方法</p><p>2.该方法中调用wrapIfNecessary方法，该方法中有两个重要的步骤①getAdvicesAndAdvisorsForBean获取该bean的所有拦截器，这个方法中分几个步骤：获取beanFactory中所有的bean，遍历找出AspectJ注解的bean,获取bean中所有的拦截器，存到缓存中，然后找到适合当前bean的所有拦截器②创建代理createProxy,这个方法中会根据用户配置比如proxy-target-class，被代理类是否implement接口等等来决定是否用jdk代理还是CGLIB代理，然后创建相应代理。</p><p>这里讲解一下jdk代理和CGLIB代理的区别和两者的源码分析：</p><p>jdk代理：是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理</p><p>CGLIB代理：利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理</p><p>1.如果目标对象实现了接口，默认情况下采取jdk的动态代理</p><p>2.如果目标对象实现了接口，可以强制采用CGLIB代理</p><p>3.如果目标没有实现接口，只能采用CGLIB代理</p><p>jdk代理使用方法：</p><p><code>public interface Say {</code></p><pre><code>void say();</code></pre><p><code>}</code></p><p><code>public class SayImpl implements Say {</code></p><pre><code>@Overridepublic void say() {    System.out.println(&quot;say hello&quot;);}</code></pre><p><code>}</code></p><p><code>public class MyInvocationHandler implements InvocationHandler{</code></p><pre><code>private Object targetObject;@Overridepublic Object invoke(Object proxy, Method method, Object[] args) throws Throwable {    System.out.println(&quot;say before&quot;);    Object object = method.invoke(targetObject,args);    System.out.println(&quot;say after&quot;);    return object;}public Object newProxy(Object targetObject){    this.targetObject=targetObject;    return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(),targetObject.getClass().getInterfaces(),this);}</code></pre><p><code>}</code></p><p><code>public class TestJDKProxy {</code></p><pre><code>public static void main(String[] args){    MyInvocationHandler myInvocationHandler = new MyInvocationHandler();    Say say = (Say) myInvocationHandler.newProxy(new SayImpl());    say.say();}</code></pre><p><code>}</code></p><p>根据源码分析生成的代理类叫ProxyN，所以在生成代理之后，把这个类写到硬盘，通过以下这个方法：</p><p><code>public class Util {</code></p><pre><code>public static void writeProxyClassToHardDisk(String path){    byte[] classFile = ProxyGenerator.generateProxyClass(&quot;$Proxy0&quot;, SayImpl.class.getInterfaces());    FileOutputStream out = null;    try{        out = new FileOutputStream(path);        out.write(classFile);        out.flush();    }catch (Exception e){        e.printStackTrace();    }finally {        try{            out.close();        }catch (Exception e){            e.printStackTrace();        }    }}</code></pre><p><code>}</code></p><p>此时通过反编译生成的class文件，即可得到生成代理类的源码如下：</p><p><code>public final class $Proxy0 extends Proxy</code></p><p>   implements Say</p><p><code>{</code></p><p>   private static Method m3;</p><p>   private static Method m1;</p><p>   private static Method m0;</p><p>   private static Method m2;</p><p>   public $Proxy0(InvocationHandler invocationhandler)</p><p>   {</p><pre><code>super(invocationhandler);</code></pre><p>   }</p><p>   public final void say()</p><p>   {</p><pre><code>try{   super.h.invoke(this, m3, null);   return;}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final boolean equals(Object obj)</p><p>   {</p><pre><code>try{   return ((Boolean)super.h.invoke(this, m1, new Object[] {      obj   })).booleanValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final int hashCode()</p><p>   {</p><pre><code>try{   return ((Integer)super.h.invoke(this, m0, null)).intValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final String toString()</p><p>   {</p><pre><code>try{   return (String)super.h.invoke(this, m2, null);}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   static </p><p>   {</p><pre><code>try{   m3 = Class.forName(&quot;com.springapp.mvc.Proxy.jdkProxy.Say&quot;).getMethod(&quot;say&quot;, new Class[0]);   m1 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;equals&quot;, new Class[] {      Class.forName(&quot;java.lang.Object&quot;)   });   m0 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;hashCode&quot;, new Class[0]);   m2 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;toString&quot;, new Class[0]);}catch (NoSuchMethodException nosuchmethodexception){   throw new NoSuchMethodError(nosuchmethodexception.getMessage());}catch (ClassNotFoundException classnotfoundexception){   throw new NoClassDefFoundError(classnotfoundexception.getMessage());}</code></pre><p>   }</p><p><code>}</code></p><p>cglib代理的使用方法：</p><p><code>public class SayHello {</code></p><pre><code>public void say(){    System.out.println(&quot;hello everyone&quot;);}</code></pre><p><code>}</code></p><p><code>public class CglibProxy implements MethodInterceptor {</code></p><pre><code>private Enhancer enhancer = new Enhancer();public Object getProxy(Class clazz){    enhancer.setSuperclass(clazz);    enhancer.setCallback(this);    return enhancer.create();}@Overridepublic Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {    System.out.println(&quot;前置代理&quot;);    Object res = methodProxy.invokeSuper(o,objects);    System.out.println(&quot;后置处理&quot;);    return res;}</code></pre><p><code>}</code></p><p><code>public class DoCglib {</code></p><pre><code>public static void main(String[] args){    CglibProxy proxy = new CglibProxy();    SayHello proxyImpl = (SayHello)proxy.getProxy(SayHello.class);    proxyImpl.say();}</code></pre><p><code>}</code></p><p>spring中jdk代理的处理：</p><p>spring中的jdkDynamicAopProxy确实实现了InvocationHandler接口，其中也包含了getProxy和invoke。其中getProxy函数创建了代理，</p><p>invoke函数里面包含了AOP的核心逻辑，这个方法逻辑：</p><p>1.处理equals方法</p><p>2.处理hash方法</p><p>3.处理expose属性，当这个属性为true时，暴露代理来实现内部调用是能通过代理实现增强</p><p>4.获取当前方法的所有拦截器</p><p>5.如果没有拦截器,那么直接调用切点方法，如果有会将拦截器封装到ReflectiveMethodInvocation</p><p>6.调用ReflectiveMethodInvocation类中的proceed方法</p><p>7.proceed方法中维护了链接调用的计数器，记录当前调用链接的位置，他会根据传入的拦截器链获取要执行的拦截器，然后实例化InterceptorAndDynamicMethodMatcher,InterceptorAndDynamicMethodMatcher中有两个属性MethodInterceptor、MethodMatcher,这两个属性的作用分别是：MethodInterceptor是一个接口，所以他会根据传入不同的拦截器来分发给不同的继承类来实现具体逻辑，比如传入前置拦截器，具体实现则交给了MethodBeforeAdviceInterceptor，在这个类invoke（会传入当前类当参数）方法中会先调用MethodBeforeAdvice的before方法，然后再调用传入类的proceed方法，以此循环，最终执行完拦截器链中的所有拦截器；MethodMatcher是方法匹配器，来检查当前拦截器是否适用当前方法，如果适用则执行拦截器，不适用则略过当前拦截器。</p><p>spring中cglib代理的处理：</p><p>三、调用方法</p><p>jdk代理：由于生成了代理匿名类，所以当调用被代理类的某个方法时，会调用代理类中的invoke方法，具体实现上面已经讲到了。</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;源码分析：&lt;/p&gt;
-&lt;p&gt;这里先描述aop的具体流程：&lt;/p&gt;
-&lt;p&gt;一、解析xml&lt;/p&gt;
-&lt;p&gt;1.加载xml资源文件时解析&lt;aop:aspectj-autoproxy expose-proxy=&quot;true&quot; proxy-target-class=&quot;true&quot;&gt;&lt;/aop:aspectj-autoproxy&gt;&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
-    
-    
-      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-      <category term="spring" scheme="http://yoursite.com/tags/spring/"/>
     
   </entry>
   
@@ -513,37 +538,6 @@
       <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
     
       <category term="hashMap" scheme="http://yoursite.com/tags/hashMap/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>ArrayList源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--ArrayList源码分析/</id>
-    <published>2017-11-30T02:30:00.000Z</published>
-    <updated>2017-11-30T03:24:44.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p><p><code>ArrayList 的add源码为：</code></p><pre><code>public boolean add(E e){     ensureCapacityInternal(size +1);     elementData[size++]==e;</code></pre><a id="more"></a><pre><code>     return true;}</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p><p>其中的ensureCapacityInternal函数的源码为：</p><p><code>private void ensureCapacityInternal(int minCapacity){</code></p><pre><code>if(elementData == EMPTY_ELEMENTDATA){     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);}ensureExplicitCapacity(minCapacity);</code></pre><p><code>}</code></p><p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p><pre><code>`private void ensureExplicitCapacity(int minCapacity){`     modCount++;     if(minCapacity - elementData.length&gt;0){          grow(minCapacity);     }}</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p><p>grow()的源码为：</p><p><code>private void grow(int minCapacity){</code></p><pre><code>int oldCapacity = elementData.length;int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);if(newCapacity - minCapacity&lt;0)     newCapacity=minCapacity;if(newCapacity-MAX_ARRAY_SIZE&gt;0)     newCapacity = hugeCapacity(minCapacity); elementData = Arrays.copyof(element,newCapacity);</code></pre><p><code>}</code></p><p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p><p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p><p><code>public E remove(int index){</code></p><pre><code>rangeCheck(index);modCount++;E oldValue=elementData(index);int numMoved = size -index -1;if(numMoved&gt;0){     System.arraycopy(elementData,index+1,elementData,index,numMoved);}elementData[--size]=null;return oldValue;</code></pre><p> <code>}</code></p><p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p><p>我们再看get的源码:</p><p><code>public E get(int index){</code></p><pre><code>rangeCheck(index);checkForComodification();return ArrayList.this.elementData(offset+index);</code></pre><p><code>}</code></p><p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p><p><code>public E set(int index,E e){</code></p><pre><code>rangeCheck(index);checkForComodification();E oldValue = Array.this.elementData(offset + index);ArrayList.this.elementData[offset +index]=e;return oldValue;</code></pre><p><code>}</code></p><p>这段源码比较容易理解，也是先检查了是否数组越界。</p><p>contains的源码为：</p><p><code>public boolean contains(Object o){</code></p><pre><code>return indexOf(o)&gt;=0;</code></pre><p><code>}</code></p><p><code>public int indexOf(Object o){</code></p><pre><code>if(o==null){     for(int i=0;i&lt;size;i++){          if(elementData[i]==null)               return i;     }}else {     for(int i=0;i&lt;size;i++){          if(o.equals(elementData[i))               return i;     }}return -1;</code></pre><p><code>}</code></p><p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p><p>还有clone的源码：</p><p><code>public Object clone(){</code></p><pre><code>try{     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();     v.elementData = Arrays.copyof(elementData,size);     v.modCount = 0;}catch(CloneNotSupportedException e){     throw new InternalError();}</code></pre><p><code>}</code></p><p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;ArrayList的基本存储数据结构为数组&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;ArrayList 的add源码为：&lt;/code&gt;&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;public boolean add(E e){
-
-     ensureCapacityInternal(size +1);
-
-     elementData[size++]==e;
-&lt;/code&gt;&lt;/pre&gt;
-    
-    </summary>
-    
-      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
-    
-    
-      <category term="java" scheme="http://yoursite.com/tags/java/"/>
-    
-      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
     
   </entry>
   
