@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-03-15T11:19:09.000Z</updated>
+  <updated>2018-03-16T06:48:22.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,33 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>MySQL索引之数据结构及应用原理</title>
+    <link href="http://yoursite.com/2018/03/16/MySQL%E7%B4%A2%E5%BC%95%E4%B9%8B%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8F%8A%E5%BA%94%E7%94%A8%E5%8E%9F%E7%90%86/"/>
+    <id>http://yoursite.com/2018/03/16/MySQL索引之数据结构及应用原理/</id>
+    <published>2018-03-16T02:53:00.000Z</published>
+    <updated>2018-03-16T06:48:22.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>参考文章地址：<a href="http://blog.codinglabs.org/articles/theory-of-mysql-index.html" target="_blank" rel="noopener">http://blog.codinglabs.org/articles/theory-of-mysql-index.html</a></p><p>目前大部分数据库系统及文件系统都采用B-tree或其变种B+tree作为索引结构。</p><p>B-tree和B+tree之前的博客已经分析过了，这里不再复述。</p><h4 id="采用B-Tree-B-Tree-的原因"><a href="#采用B-Tree-B-Tree-的原因" class="headerlink" title="采用B-Tree(B+Tree)的原因"></a>采用B-Tree(B+Tree)的原因</h4><p>一般来说，索引本身也很大，不可能全部存储于内存中，因此索引往往以索引文件</p><a id="more"></a><p>的形式存储于磁盘上。这样的话，索引查找过程中就要产生磁盘I/O的消耗，相对于内存存取，I/O存取的消耗要高于几个数量级，所以评价一个数据结构作为索引的优劣最重要的指标就是在查找过程中磁盘I/O操作次数的渐进复杂度。换句话说，索引的结构组织要尽量减少查找过程中I/O的存取次数。下面先说明一下内存和磁盘存取原理，然后再结合这些原理分析B-/+Tree作为索引的效率。</p><h5 id="主存存取原理"><a href="#主存存取原理" class="headerlink" title="主存存取原理"></a>主存存取原理</h5><p>目前计算机使用的主存基本上都是随机读写存储器（RAM）,现代RAM的结构和存取原理比较复杂，这里抽象一个十分简单的存取模型来说明RAM的工作原理</p><p> <img src="/2018/03/16/MySQL索引之数据结构及应用原理/5.png" alt="5"></p><p>从抽象角度看，主存是一系列的存储单元组成的矩阵，每个存储单元存储固定大小的数据。每个数据单元有唯一的地址，现代主存的遍址规则比较复杂，这里将其简化成一个二维地址：通过一个行地址和一个列地址可以唯一定为到一个存储单元。上图展示了一个4*4的主存模型</p><p>主存的存取过程如下：</p><p>当系统需要读取主存时，则将地址信号放到地址总线上传给主存，主存读到地址信号后，解析信号并定位到指定存储单元，然后将此存储单元数据放到数据总线上，供其他部件读取。</p><p>写主存的过程类似，系统将要写入单元地址和数据分别放在地址总线和数据总线上，主存读取两个总线的内容，做相应的写操作。</p><p>这里可以看出，主存存取的时间仅与存取次数呈线性关系，因为不存在机械操作，两次存取的数据的“距离”不会对时间有任何影响，例如，先取A0再取A1和先取A0再取D3的时间消耗是一样的。</p><h5 id="磁盘存储原理"><a href="#磁盘存储原理" class="headerlink" title="磁盘存储原理"></a>磁盘存储原理</h5><p>索引一般是以文件的形式存储在磁盘上，索引检索需要磁盘I/O操作。与主存不同，磁盘I/O存在机械运动耗费，因此磁盘I/O的时间消耗是巨大的。</p><p>磁盘示意图如下：</p><p> <img src="/2018/03/16/MySQL索引之数据结构及应用原理/6.png" alt="6"></p><p>一个磁盘由大小相同且同轴的圆形盘片组成，磁盘可以转动（各个磁盘必须同步转动）。在磁盘的一侧有磁头支架，磁头支架固定了一组磁头，每个磁头负责存取一个磁盘的内容。磁头不能转动，但是可以沿磁盘半径方向运动（实际是斜切向运动），每个磁头同一时刻也必须是同轴的，即从正上方向下看，所有磁盘任何时候都是重叠的（目前已经有多个磁头独立技术）</p><p>下图是磁盘结构的示意图：</p><p> <img src="/2018/03/16/MySQL索引之数据结构及应用原理/7.png" alt="7"></p><p>盘片被分化为一系列同心环，圆心是盘片的中心，每个同心环叫做一个磁道，所有半径相同的磁道组成一个柱面。磁道被沿半径线划分为一个个小的段，每个段叫做一个扇区，每个扇区是磁盘的最小存储单元。</p><p>当需要从磁盘读取数据时，系统会将数据逻辑地址传给磁盘，磁盘的控制电路按照寻址逻辑地址翻译成物理地址，即确定要读的数据在哪个磁道，哪个扇区。为了读取这个扇区的数据，需要将磁头放到这个扇区上方，为了实现这一点，磁头需要移动对准相应磁道，这个过程叫做寻道，所耗费时间叫做寻道时间，然后磁盘旋转将目标扇区旋转到磁头下，这个过程耗费的时间叫做旋转时间。</p><h5 id="局部性原理与磁盘预读"><a href="#局部性原理与磁盘预读" class="headerlink" title="局部性原理与磁盘预读"></a>局部性原理与磁盘预读</h5><p>由于存储介质的特性，磁盘本身存取就比主存慢很多，再加上机械运动耗费，磁盘的存取速度往往是主存的几百分之一，因此为了提高效率，要尽量减少磁盘I/O。为了达到这个目的，磁盘往往不是严格按需读取，而是每次都会预读，即使只需要一个字节，磁盘也会从这个位置开始，顺序向后读取一定长度的数据放入内存。这样做的理论依据是计算机科学中著名的局部性原理：</p><p>当一个数据被用到时，其附件的数据也通常被马上用到。</p><p>程序运行期间所需要的数据通常比较集中。</p><p>由于磁盘顺序读取的效率很高（不需要寻道时间，只需要很少的旋转时间），因此对于具有局部性的程序来说，预读可以提高I/O效率。</p><p>预读的长度一般为页的整倍数。页是计算机管理存储器的逻辑块，硬件及操作系统往往会将主存和磁盘存储区分割为连续的大小相等的块，每个存储块为一页（许多操作系统中，页得大小通常为4k）,主存和磁盘以页为单位交换数据。当程序要读取的数据不在主存中时，会触发一个缺页异常，此时系统会向磁盘发出读盘信号，磁盘会找到数据的起始位置并向后连续读取一页或几页载入内存中，然后异常返回，程序继续运行。</p><h5 id="B-Tree索引的性能分析"><a href="#B-Tree索引的性能分析" class="headerlink" title="B-/+Tree索引的性能分析"></a>B-/+Tree索引的性能分析</h5><p>上文说过一般使用磁盘I/O次数评价索引结构的优劣。先从B-Tree分析，根据B-Tree的定义，可知检索一次最多需要访问h个结点。数据库系统的设计者巧妙利用了磁盘预读原理，将一个结点的大小设为等于一页，这个每个节点只需要一次I/O就可以完全载入。为了达到这个目的，在实际实现B-Tree还需要使用如下技巧：</p><p>每次新建结点时，直接申请一个页的空间，这样就保证了一个结点物理也存储在一个页里，加之计算机存储分配都是按页对齐的，就实现了一个node只需一次I/O。</p><p>B-Tree中一次检索最多需要h-1次I/O（注意：根节点常驻内存），渐进复杂度为O(h) = O(log_dN)。一般实际应用中，出度d是非常大的数字，通常超过100，因此h非常小（通常不超过3）</p><p>综上所述，用B-Tree作为索引结构效率是非常高的。</p><p>而红黑树这种结构，h明显要深的多。由于逻辑上很近的结点（父子）物理上可能很远，无法利用局部性，所以红黑树的I/O渐进复杂度也为O(h)，效率明显比B-Tree差很多。</p><p>上文还说过，B+Tree更适合外存索引，原因和内结点出度d有关。从上面分析可以看到，d越大索引的性能越好，而出度的上限取决于节点内key和data的大小：</p><p>d(max) = floor( pagesize / (keysize + datasize + pointsize) )</p><p>floor表示向下取整。由于B+Tree内节点去掉了data域，因此可以拥有更大的出度，拥有更好的性能。</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;参考文章地址：&lt;a href=&quot;http://blog.codinglabs.org/articles/theory-of-mysql-index.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;http://blog.codinglabs.org/articles/theory-of-mysql-index.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;目前大部分数据库系统及文件系统都采用B-tree或其变种B+tree作为索引结构。&lt;/p&gt;
+&lt;p&gt;B-tree和B+tree之前的博客已经分析过了，这里不再复述。&lt;/p&gt;
+&lt;h4 id=&quot;采用B-Tree-B-Tree-的原因&quot;&gt;&lt;a href=&quot;#采用B-Tree-B-Tree-的原因&quot; class=&quot;headerlink&quot; title=&quot;采用B-Tree(B+Tree)的原因&quot;&gt;&lt;/a&gt;采用B-Tree(B+Tree)的原因&lt;/h4&gt;&lt;p&gt;一般来说，索引本身也很大，不可能全部存储于内存中，因此索引往往以索引文件&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="MySQL" scheme="http://yoursite.com/categories/MySQL/"/>
+    
+    
+      <category term="MySQL" scheme="http://yoursite.com/tags/MySQL/"/>
+    
+      <category term="索引" scheme="http://yoursite.com/tags/%E7%B4%A2%E5%BC%95/"/>
+    
+  </entry>
   
   <entry>
     <title>B+树数据结构</title>
@@ -430,6 +457,37 @@
   </entry>
   
   <entry>
+    <title>LinkedList源码分析</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/</id>
+    <published>2017-11-30T02:30:00.000Z</published>
+    <updated>2017-11-30T03:25:04.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>LinkedList的基本存储结构是链表</p><p>LinkedList的节点元素的存储结构为：</p><pre><code>`private static class Node&lt;E&gt;{`     E item;     Node&lt;E&gt; next;</code></pre><a id="more"></a><pre><code>     Node&lt;E&gt; prev;     Node(Node&lt;E&gt; prev,E element,Node&lt;E&gt; next){          this.item = element;          this.next = next;          this.prev = prev;     }`}`</code></pre><p>LinkedList的add源码为：</p><p><code>public boolean add(E e){</code></p><pre><code>linkLast(e);return true;</code></pre><p><code>}</code></p><p><code>void linkLast(E e){</code></p><pre><code>final Node&lt;E&gt; l = last;final Node&lt;E&gt; newNode = new Node&lt;&gt;(l,e,null);last = newNode;if(l==null)     first = newNode;else     l.next = newNode;size++;modCount++;</code></pre><p><code>}</code></p><p>因为LinkedList的基本结构是链表，所以add就是在链表的末尾添加一个节点，然后size++，当last==null代表改list为空的，所以头结点置为newNode</p><p>linkedList的remove源码为：</p><p><code>public boolean remove(Object o){</code></p><pre><code>if(o==null){     for(Node&lt;E&gt; x=first;x!=null;x=x.next){          if(x.item == null){               unlink(x);               return true;          }     }}else{     for(Node&lt;E&gt; x=first;x!=null;x=x.next){          if(o.equals(x.item)){               unlink(x);               return true;          }     }}return false;</code></pre><p><code>}</code></p><p>linkedList的remove就是从头遍历节点，然后调用unlink来remove节点，unlink的源码如下：</p><p>   <code>E unlink(Node&lt;E&gt; x){</code></p><pre><code>     final E element = x.item;     final Node&lt;E&gt; next = x.next;     final Node&lt;E&gt; prev = x.prev;     if(prev == null){          first=next;     }else{          prev.next = next;          x.prev = null;     }     if(next == null){          last=prev;     }else{          next.prev=prev;          x.next = null;     }     x.item = null;     size--;     modCount++;     return element;}</code></pre><p>``unlink就是把元素的前节点的next指向该元素的next,把元素的后节点的prev指向该元素的prev,然后把该元素的prev和next和item置为null,方便GC回收。</p><p>linkedList的get的源码为：</p><p><code>public E get(int index){</code></p><pre><code>checkElementIndex(index);return node(index).item;</code></pre><p><code>}</code></p><p>get的时候先检测了index是否&lt;0或者大于size,若是则抛出异常。node()的源码为：</p><p>N<code>ode&lt;E&gt; node(int index){</code></p><pre><code>if(index&lt;(size&gt;&gt;1)){     Node&lt;E&gt; x = first;     for(int i=0;i&lt;index;i++)          x=x.next;     return x;}else{     Node&lt;E&gt; x = last;     for(int i=size-1;i&gt;index;i--)          x = x.prev;     return x;}</code></pre><p><code>}</code></p><p>node方法就是先判断一下index接近first还是last，然后决定从哪个方向开始查找。</p><p>linkedList的contains的源码为：</p><p><code>public boolean contains(Object o){</code></p><pre><code>return indexOf(o)!=-1;</code></pre><p><code>}</code></p><p><code>public int indexOf(Object o){</code></p><pre><code>int index = 0;if(o==null){     for(Node&lt;E&gt; x=first;x!=null;x=x.next){          if(x.item == null)               return index;          index++;     }}else{     for(Node&lt;E&gt; x = first;x!=null;x=x.next){             if(o.equals(x.item))                    return index;               index++;     }}return -1;</code></pre><p><code>}</code></p><p>contains就是从first开始遍历，查到就返回index</p><p>linkedList的clone的源码为：</p><p><code>public Object clone(){</code></p><pre><code>LinkedList&lt;E&gt; clone = superClone();clone.first = clone.last=null;clone.size=0;clone.modCount = 0;for(Node&lt;E&gt; x=first;x!=null;x=x.next)     clone.add(x.item);return clone;</code></pre><p><code>}</code></p><p>``LinkedList的clone是浅克隆，只是克隆了引用。</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;LinkedList的基本存储结构是链表&lt;/p&gt;
+&lt;p&gt;LinkedList的节点元素的存储结构为：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;`private static class Node&amp;lt;E&amp;gt;{`
+
+     E item;
+
+     Node&amp;lt;E&amp;gt; next;
+&lt;/code&gt;&lt;/pre&gt;
+    
+    </summary>
+    
+      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
+    
+    
+      <category term="java" scheme="http://yoursite.com/tags/java/"/>
+    
+      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
+    
+  </entry>
+  
+  <entry>
     <title>hashMap源码分析</title>
     <link href="http://yoursite.com/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
     <id>http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/</id>
@@ -486,63 +544,6 @@
       <category term="java" scheme="http://yoursite.com/tags/java/"/>
     
       <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>LinkedList源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/</id>
-    <published>2017-11-30T02:30:00.000Z</published>
-    <updated>2017-11-30T03:25:04.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>LinkedList的基本存储结构是链表</p><p>LinkedList的节点元素的存储结构为：</p><pre><code>`private static class Node&lt;E&gt;{`     E item;     Node&lt;E&gt; next;</code></pre><a id="more"></a><pre><code>     Node&lt;E&gt; prev;     Node(Node&lt;E&gt; prev,E element,Node&lt;E&gt; next){          this.item = element;          this.next = next;          this.prev = prev;     }`}`</code></pre><p>LinkedList的add源码为：</p><p><code>public boolean add(E e){</code></p><pre><code>linkLast(e);return true;</code></pre><p><code>}</code></p><p><code>void linkLast(E e){</code></p><pre><code>final Node&lt;E&gt; l = last;final Node&lt;E&gt; newNode = new Node&lt;&gt;(l,e,null);last = newNode;if(l==null)     first = newNode;else     l.next = newNode;size++;modCount++;</code></pre><p><code>}</code></p><p>因为LinkedList的基本结构是链表，所以add就是在链表的末尾添加一个节点，然后size++，当last==null代表改list为空的，所以头结点置为newNode</p><p>linkedList的remove源码为：</p><p><code>public boolean remove(Object o){</code></p><pre><code>if(o==null){     for(Node&lt;E&gt; x=first;x!=null;x=x.next){          if(x.item == null){               unlink(x);               return true;          }     }}else{     for(Node&lt;E&gt; x=first;x!=null;x=x.next){          if(o.equals(x.item)){               unlink(x);               return true;          }     }}return false;</code></pre><p><code>}</code></p><p>linkedList的remove就是从头遍历节点，然后调用unlink来remove节点，unlink的源码如下：</p><p>   <code>E unlink(Node&lt;E&gt; x){</code></p><pre><code>     final E element = x.item;     final Node&lt;E&gt; next = x.next;     final Node&lt;E&gt; prev = x.prev;     if(prev == null){          first=next;     }else{          prev.next = next;          x.prev = null;     }     if(next == null){          last=prev;     }else{          next.prev=prev;          x.next = null;     }     x.item = null;     size--;     modCount++;     return element;}</code></pre><p>``unlink就是把元素的前节点的next指向该元素的next,把元素的后节点的prev指向该元素的prev,然后把该元素的prev和next和item置为null,方便GC回收。</p><p>linkedList的get的源码为：</p><p><code>public E get(int index){</code></p><pre><code>checkElementIndex(index);return node(index).item;</code></pre><p><code>}</code></p><p>get的时候先检测了index是否&lt;0或者大于size,若是则抛出异常。node()的源码为：</p><p>N<code>ode&lt;E&gt; node(int index){</code></p><pre><code>if(index&lt;(size&gt;&gt;1)){     Node&lt;E&gt; x = first;     for(int i=0;i&lt;index;i++)          x=x.next;     return x;}else{     Node&lt;E&gt; x = last;     for(int i=size-1;i&gt;index;i--)          x = x.prev;     return x;}</code></pre><p><code>}</code></p><p>node方法就是先判断一下index接近first还是last，然后决定从哪个方向开始查找。</p><p>linkedList的contains的源码为：</p><p><code>public boolean contains(Object o){</code></p><pre><code>return indexOf(o)!=-1;</code></pre><p><code>}</code></p><p><code>public int indexOf(Object o){</code></p><pre><code>int index = 0;if(o==null){     for(Node&lt;E&gt; x=first;x!=null;x=x.next){          if(x.item == null)               return index;          index++;     }}else{     for(Node&lt;E&gt; x = first;x!=null;x=x.next){             if(o.equals(x.item))                    return index;               index++;     }}return -1;</code></pre><p><code>}</code></p><p>contains就是从first开始遍历，查到就返回index</p><p>linkedList的clone的源码为：</p><p><code>public Object clone(){</code></p><pre><code>LinkedList&lt;E&gt; clone = superClone();clone.first = clone.last=null;clone.size=0;clone.modCount = 0;for(Node&lt;E&gt; x=first;x!=null;x=x.next)     clone.add(x.item);return clone;</code></pre><p><code>}</code></p><p>``LinkedList的clone是浅克隆，只是克隆了引用。</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;LinkedList的基本存储结构是链表&lt;/p&gt;
-&lt;p&gt;LinkedList的节点元素的存储结构为：&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;`private static class Node&amp;lt;E&amp;gt;{`
-
-     E item;
-
-     Node&amp;lt;E&amp;gt; next;
-&lt;/code&gt;&lt;/pre&gt;
-    
-    </summary>
-    
-      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
-    
-    
-      <category term="java" scheme="http://yoursite.com/tags/java/"/>
-    
-      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>破解x-pack</title>
-    <link href="http://yoursite.com/2017/11/28/%E7%A0%B4%E8%A7%A3x-pack/"/>
-    <id>http://yoursite.com/2017/11/28/破解x-pack/</id>
-    <published>2017-11-28T09:48:33.000Z</published>
-    <updated>2017-12-28T03:07:46.000Z</updated>
-    
-    <content type="html"><![CDATA[<h1 id="x-pack-安装步骤如下"><a href="#x-pack-安装步骤如下" class="headerlink" title="x-pack 安装步骤如下:"></a>x-pack 安装步骤如下:</h1><h3 id="1-在ES5-0安装-X-PACK"><a href="#1-在ES5-0安装-X-PACK" class="headerlink" title="1.在ES5.0安装 X-PACK"></a>1.在ES5.0安装 X-PACK</h3><p>bin/elasticsearch-plugin install x-pack</p><p>如果不需要该插件，也可以通过非常简单的方式删除：</p><p>bin/elasticsearch-plugin remove x-pack</p><a id="more"></a><h3 id="2-在kibana5-0中安装X-PACK"><a href="#2-在kibana5-0中安装X-PACK" class="headerlink" title="2.在kibana5.0中安装X-PACK"></a>2.在kibana5.0中安装X-PACK</h3><p>bin/kibana-plugin install x-pack</p><p>卸载：bin/kibana-plugin remove x-pack</p><p>安装成功后重启ElasticSearch和Kibana：</p><p>以上安装之后，就会发现ES的访问和Kibana的访问都受到限制</p><p>默认的用户名和密码：</p><p>用户名：elastic</p><p>密码：changeme</p><p>登录到Kibana会发现 elastic是一个最高级别的user，拥有所有权限，其角色是superuser。</p><p>elasticsearch和kibana默认是受限可一修改配置文件来取消限制。具体参见 ：<a href="https://www.elastic.co/guide/en/x-pack/current/installing-xpack.html" target="_blank" rel="noopener">https://www.elastic.co/guide/en/x-pack/current/installing-xpack.html</a></p><p>登录时不让输入用户和密码，提示license不允许，免费的license只有一年时间，找了一下,可以破解，步骤如下：</p><h5 id="1-破解并安装"><a href="#1-破解并安装" class="headerlink" title="1: 破解并安装"></a>1: 破解并安装</h5><p>下载x-pack-5.2.0.zip，</p><p>解压并找到x-pack-5.2.0.jar。这里使用JD-GUI是无法反编译的，</p><p>我使用的是Luyten(下载地址：<a href="https://github.com/deathmarine/Luyten/releases/tag/v0.5.0）进行反编译。" target="_blank" rel="noopener">https://github.com/deathmarine/Luyten/releases/tag/v0.5.0）进行反编译。</a></p><p>将org.elasticsearch/license/LicenseVerifier.class反编译并保存出来。这个类是检查license完整性的类，我们使其始终返回true，就可以任意修改license并导入。将其改为：</p><p>package org.elasticsearch.license;</p><p><code>import java.nio.*;</code></p><p><code>import java.util.*;</code></p><p><code>import java.security.*;</code></p><p><code>import org.elasticsearch.common.xcontent.*;</code></p><p><code>import org.apache.lucene.util.*;</code></p><p><code>import org.elasticsearch.common.io.*;</code></p><p><code>import java.io.*;</code></p><p><code>public class LicenseVerifier</code></p><p><code>{</code></p><p><code>public static boolean verifyLicense(final License license, final byte[] encryptedPublicKeyData) {</code></p><p><code>return true;</code></p><p><code>}</code></p><p><code>public static boolean verifyLicense(final License license) {</code></p><p><code>return true;</code></p><p><code>}</code></p><p><code>}</code></p><p>注：红色的部分可以都不要</p><p>然后需要重新编译class文件。注意这里我们无需编译整个工程，将原来的x-pack-5.2.0.jar和依赖包加入CLASSPATH，即可完成单个文件的编译。实际上只用到了3个依赖包，如果是用RPM或DEB安装的，直接运行：</p><p>javac -cp “e:/tools/linux/elasticsearch/5.0/elasticsearch-5.0.0.jar;e:/tools/linux/elasticsearch/5.0/lucene-core-6.2.0.jar;E:/tools/linux/elasticsearch/5.0/x-pack-5.0.0/elasticsearch/x-pack-5.0.0.jar” LicenseVerifier.java</p><p>注：javac执行时的参数cp 表示classpath 路径，如果多个在windows环境中用 ; 隔开，linux中用 : 隔开；</p><p>把x-pack-5.2.0.jar用压缩文件管理器打开，将里面的LicenseVerifier.class替换掉。再把破解了的jar包部署到各节点上，</p><p>将破解的.zip文件安装到服务器,启动 elasticsearch,kibana，并重启集群。安装新的之前要现将已经安装的删除。</p><p>./bin/elasticsearch-plugin remove x-pack</p><p>./bin/elasticsearch-plugin install file:///srv/x-pack-5.4.1.zip</p><p>./bin/kibana-plugin install file:///srv/x-pack-5.4.1.zip</p><p>申请一个免费license(<a href="https://license.elastic.co/registration" target="_blank" rel="noopener">https://license.elastic.co/registration</a>) 注册后可以下载文件,下载后修改，例如：</p><p>主要修改：type改为platinum表示可以使用所有功能 ; expiry_date_in<em>millis  我这里改了10年 ^</em>^</p><p><code>{&quot;license&quot;:{&quot;uid&quot;:&quot;10cf8263-4d23-4e81-b10b-95abfb14b599&quot;,&quot;type&quot;:&quot;platinum&quot;,&quot;issue_date_in_millis&quot;:1490832000000,&quot;expiry_date_in_millis&quot;:1806237751991,&quot;max_nodes&quot;:100,&quot;issued_to&quot;:&quot;www bbb (baiye)&quot;,&quot;issuer&quot;:&quot;Web Form&quot;,&quot;signature&quot;:&quot;+2yc0QcB&quot;,&quot;start_date_in_millis&quot;:1490832000000}}</code></p><p>``【安装license】</p><p>查看当前的license</p><p><code>[root@localhost Downloads]# curl -XGET -u elastic:changeme &#39;http://192.168.100.50:9200/_license&#39;</code></p><p>将编辑好的license.json文件放到服务器，在文件目录下执行：</p><p><code>[root@localhost Downloads]#curl -XPUT -u elastic:changeme &#39;http://192.168.100.50:9200/_xpack/license&#39; -d @license.json</code></p><p>或者下面：</p><p><code>[root@localhost Downloads]#curl -XPUT -u elastic:changeme &#39;http://192.168.100.50:9200/_xpack/license?acknowledge=true&#39; -d @license.json</code></p><p>重启elasticsearch和kibana .</p><p>打开：<a href="http://*.*.***.**:5601/login" target="_blank" rel="noopener">http://*.*.***.**:5601/login</a>  可正常登录。</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;h1 id=&quot;x-pack-安装步骤如下&quot;&gt;&lt;a href=&quot;#x-pack-安装步骤如下&quot; class=&quot;headerlink&quot; title=&quot;x-pack 安装步骤如下:&quot;&gt;&lt;/a&gt;x-pack 安装步骤如下:&lt;/h1&gt;&lt;h3 id=&quot;1-在ES5-0安装-X-PACK&quot;&gt;&lt;a href=&quot;#1-在ES5-0安装-X-PACK&quot; class=&quot;headerlink&quot; title=&quot;1.在ES5.0安装 X-PACK&quot;&gt;&lt;/a&gt;1.在ES5.0安装 X-PACK&lt;/h3&gt;&lt;p&gt;bin/elasticsearch-plugin install x-pack&lt;/p&gt;
-&lt;p&gt;如果不需要该插件，也可以通过非常简单的方式删除：&lt;/p&gt;
-&lt;p&gt;bin/elasticsearch-plugin remove x-pack&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="ELK" scheme="http://yoursite.com/categories/ELK/"/>
-    
-    
-      <category term="ELK" scheme="http://yoursite.com/tags/ELK/"/>
-    
-      <category term="数据" scheme="http://yoursite.com/tags/%E6%95%B0%E6%8D%AE/"/>
     
   </entry>
   
