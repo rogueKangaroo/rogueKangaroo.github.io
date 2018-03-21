@@ -264,7 +264,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--ArrayList源码分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -283,7 +283,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/11/30/2017-11-30--hashMap源码分析/" itemprop="url">hashMap源码分析</a></h1>
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--ArrayList源码分析/" itemprop="url">ArrayList源码分析</a></h1>
         
 
         <div class="post-meta">
@@ -356,15 +356,17 @@
 
       
         
-          <p>java基本存储结构：数组和链表</p>
-<p>hashMap就是数组加链表的存储结构。</p>
-<p>put源码：</p>
-<p><code>public V put(K key, V value) {</code></p>
-<pre><code>if (table == EMPTY_TABLE) {
+          <p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
 </code></pre>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/11/30/2017-11-30--hashMap源码分析/#more" rel="contents">
+            <a class="btn" href="/2017/11/30/2017-11-30--ArrayList源码分析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -520,6 +522,159 @@
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2017/11/30/2017-11-30--LinkedList源码分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <!-- <div class="post-eof"></div> -->
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--hashMap源码分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/11/30/2017-11-30--hashMap源码分析/" itemprop="url">hashMap源码分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T10:30:00+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
+</code></pre>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/11/30/2017-11-30--hashMap源码分析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -763,7 +918,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-count">24</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
