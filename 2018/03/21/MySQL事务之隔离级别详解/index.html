@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="java,源码," />
+  <meta name="keywords" content="MySQL,事务," />
 
 
 
@@ -81,18 +81,18 @@
 
 
 
-<meta name="description" content="LinkedList的基本存储结构是链表 LinkedList的节点元素的存储结构为： `private static class Node&amp;lt;E&amp;gt;{`       E item;       Node&amp;lt;E&amp;gt; next;">
-<meta name="keywords" content="java,源码">
+<meta name="description" content="事务的四大特性1.原子性 事务必须是原子工作单元。对于数据修改，要么全都执行，要么全都不执行。 2.一致性 事务在完成时，必须使所有的数据都保持一致状态。（理解：事务开始和结束之间的中间状态不会被其他事务看到，举例：同一家银行内转账，A转给B 1000元，则A和B的总值是不变的，A减去1000，B加上1000的中间状态">
+<meta name="keywords" content="MySQL,事务">
 <meta property="og:type" content="article">
-<meta property="og:title" content="LinkedList源码分析">
-<meta property="og:url" content="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/index.html">
+<meta property="og:title" content="MySQL事务之隔离级别详解">
+<meta property="og:url" content="http://yoursite.com/2018/03/21/MySQL事务之隔离级别详解/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="LinkedList的基本存储结构是链表 LinkedList的节点元素的存储结构为： `private static class Node&amp;lt;E&amp;gt;{`       E item;       Node&amp;lt;E&amp;gt; next;">
+<meta property="og:description" content="事务的四大特性1.原子性 事务必须是原子工作单元。对于数据修改，要么全都执行，要么全都不执行。 2.一致性 事务在完成时，必须使所有的数据都保持一致状态。（理解：事务开始和结束之间的中间状态不会被其他事务看到，举例：同一家银行内转账，A转给B 1000元，则A和B的总值是不变的，A减去1000，B加上1000的中间状态，外部是无感知的）">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-11-30T03:25:04.000Z">
+<meta property="og:updated_time" content="2018-03-22T09:41:30.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="LinkedList源码分析">
-<meta name="twitter:description" content="LinkedList的基本存储结构是链表 LinkedList的节点元素的存储结构为： `private static class Node&amp;lt;E&amp;gt;{`       E item;       Node&amp;lt;E&amp;gt; next;">
+<meta name="twitter:title" content="MySQL事务之隔离级别详解">
+<meta name="twitter:description" content="事务的四大特性1.原子性 事务必须是原子工作单元。对于数据修改，要么全都执行，要么全都不执行。 2.一致性 事务在完成时，必须使所有的数据都保持一致状态。（理解：事务开始和结束之间的中间状态不会被其他事务看到，举例：同一家银行内转账，A转给B 1000元，则A和B的总值是不变的，A减去1000，B加上1000的中间状态，外部是无感知的）">
 
 
 
@@ -122,13 +122,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/03/21/MySQL事务之隔离级别详解/"/>
 
 
 
 
 
-  <title>LinkedList源码分析 | 有态度</title>
+  <title>MySQL事务之隔离级别详解 | 有态度</title>
   
 
 
@@ -265,7 +265,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/21/MySQL事务之隔离级别详解/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="刘凯召">
@@ -282,7 +282,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">LinkedList源码分析</h1>
+          <h1 class="post-title" itemprop="name headline">MySQL事务之隔离级别详解</h1>
         
 
         <div class="post-meta">
@@ -294,8 +294,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T10:30:00+08:00">
-                2017-11-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-21T17:39:56+08:00">
+                2018-03-21
               </time>
             
 
@@ -317,8 +317,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/源码/" itemprop="url" rel="index">
-                    <span itemprop="name">源码</span>
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
                   </a>
                 </span>
 
@@ -354,213 +354,49 @@
       
 
       
-        <p>LinkedList的基本存储结构是链表</p>
-<p>LinkedList的节点元素的存储结构为：</p>
-<pre><code>`private static class Node&lt;E&gt;{`
-
-     E item;
-
-     Node&lt;E&gt; next;
-</code></pre><a id="more"></a>
-<pre><code>     Node&lt;E&gt; prev;
-
-     Node(Node&lt;E&gt; prev,E element,Node&lt;E&gt; next){
-
-          this.item = element;
-
-          this.next = next;
-
-          this.prev = prev;
-
-     }
-
-`}`
-</code></pre><p>LinkedList的add源码为：</p>
-<p><code>public boolean add(E e){</code></p>
-<pre><code>linkLast(e);
-
-return true;
-</code></pre><p><code>}</code></p>
-<p><code>void linkLast(E e){</code></p>
-<pre><code>final Node&lt;E&gt; l = last;
-
-final Node&lt;E&gt; newNode = new Node&lt;&gt;(l,e,null);
-
-last = newNode;
-
-if(l==null)
-
-     first = newNode;
-
-else
-
-     l.next = newNode;
-
-size++;
-
-modCount++;
-</code></pre><p><code>}</code></p>
-<p>因为LinkedList的基本结构是链表，所以add就是在链表的末尾添加一个节点，然后size++，当last==null代表改list为空的，所以头结点置为newNode</p>
-<p>linkedList的remove源码为：</p>
-<p><code>public boolean remove(Object o){</code></p>
-<pre><code>if(o==null){
-
-     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
-
-          if(x.item == null){
-
-               unlink(x);
-
-               return true;
-
-          }
-
-     }
-
-}else{
-
-     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
-
-          if(o.equals(x.item)){
-
-               unlink(x);
-
-               return true;
-
-          }
-
-     }
-
-}
-
-return false;
-</code></pre><p><code>}</code></p>
-<p>linkedList的remove就是从头遍历节点，然后调用unlink来remove节点，unlink的源码如下：</p>
-<p>   <code>E unlink(Node&lt;E&gt; x){</code></p>
-<pre><code>     final E element = x.item;
-
-     final Node&lt;E&gt; next = x.next;
-
-     final Node&lt;E&gt; prev = x.prev;
-
-     if(prev == null){
-
-          first=next;
-
-     }else{
-
-          prev.next = next;
-
-          x.prev = null;
-
-     }
-
-     if(next == null){
-
-          last=prev;
-
-     }else{
-
-          next.prev=prev;
-
-          x.next = null;
-
-     }
-
-     x.item = null;
-
-     size--;
-
-     modCount++;
-
-     return element;
-
-}
-</code></pre><p>``unlink就是把元素的前节点的next指向该元素的next,把元素的后节点的prev指向该元素的prev,然后把该元素的prev和next和item置为null,方便GC回收。</p>
-<p>linkedList的get的源码为：</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>checkElementIndex(index);
-
-return node(index).item;
-</code></pre><p><code>}</code></p>
-<p>get的时候先检测了index是否&lt;0或者大于size,若是则抛出异常。node()的源码为：</p>
-<p>N<code>ode&lt;E&gt; node(int index){</code></p>
-<pre><code>if(index&lt;(size&gt;&gt;1)){
-
-     Node&lt;E&gt; x = first;
-
-     for(int i=0;i&lt;index;i++)
-
-          x=x.next;
-
-     return x;
-
-}else{
-
-     Node&lt;E&gt; x = last;
-
-     for(int i=size-1;i&gt;index;i--)
-
-          x = x.prev;
-
-     return x;
-
-}
-</code></pre><p><code>}</code></p>
-<p>node方法就是先判断一下index接近first还是last，然后决定从哪个方向开始查找。</p>
-<p>linkedList的contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)!=-1;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>int index = 0;
-
-if(o==null){
-
-     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
-
-          if(x.item == null)
-
-               return index;
-
-          index++;
-
-     }
-
-}else{
-
-     for(Node&lt;E&gt; x = first;x!=null;x=x.next){
-
-             if(o.equals(x.item))
-
-                    return index;
-
-               index++;
-
-     }
-
-}
-
-return -1;
-</code></pre><p><code>}</code></p>
-<p>contains就是从first开始遍历，查到就返回index</p>
-<p>linkedList的clone的源码为：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>LinkedList&lt;E&gt; clone = superClone();
-
-clone.first = clone.last=null;
-
-clone.size=0;
-
-clone.modCount = 0;
-
-for(Node&lt;E&gt; x=first;x!=null;x=x.next)
-
-     clone.add(x.item);
-
-return clone;
-</code></pre><p><code>}</code></p>
-<p>``LinkedList的clone是浅克隆，只是克隆了引用。</p>
+        <h2 id="事务的四大特性"><a href="#事务的四大特性" class="headerlink" title="事务的四大特性"></a>事务的四大特性</h2><p>1.原子性</p>
+<p>事务必须是原子工作单元。对于数据修改，要么全都执行，要么全都不执行。</p>
+<p>2.一致性</p>
+<p>事务在完成时，必须使所有的数据都保持一致状态。（理解：事务开始和结束之间的中间状态不会被其他事务看到，举例：同一家银行内转账，A转给B 1000元，则A和B的总值是不变的，A减去1000，B加上1000的中间状态，外部是无感知的）</p>
+<a id="more"></a>
+<p>3.隔离性</p>
+<p>由并发事务所作的修改必须与任何其他并发事务所作的修改隔离。</p>
+<p>4.持久性</p>
+<p>事务完成之后，它对于系统的影响是永久性的。</p>
+<h2 id="数据库针对事务的四种隔离级别"><a href="#数据库针对事务的四种隔离级别" class="headerlink" title="数据库针对事务的四种隔离级别"></a>数据库针对事务的四种隔离级别</h2><p>脏读：某个事务已更新一份数据，另一个事务在此时读取了同一份数据（bao），如果前一个rollBack了，则后一个事务所读取的数据就会是不正确的。</p>
+<p>不可重复读：在一个事务的两次查询之中数据不一致，可能是两次查询过程中插入了一个事务更新的原有的数据。</p>
+<p>幻读：在一个事务的两次查询中数据数不一致。例如有一个事务查询了几列数据，而另一个事务却在此时插入了新的几列数据，先前的事务在接下来的查询中，就会发现有几列数据是它先前所没有的。</p>
+<p>1.Read Uncommitted(读取未提交内容)</p>
+<p>在该隔离级别，所有事务都可以看见其他未提交事务的执行结果。这种隔离级别可能导致脏读，不可重复读和幻读。</p>
+<p>2.Read Committed(读取提交内容)</p>
+<p>这是大多数数据库的默认隔离级别（MySQL不是），它满足了隔离的简单定义：一个事务只能看见自己已经提交的事务所做的改变，这种情况也会导致不可重复读，因为同一事务的其他实例在该实例处理其间可能会有新的commit，所以同一个select可能会有不同的结果。</p>
+<p>3.Repeatable Read(可重读)</p>
+<p>这是MySQL的默认事务隔离级别，它确保同一事务的多个实例在并发读取数据时，会看到同样的数据行。不过理论上，这会导致新的问题：幻读，据说InnoDB和Falcon存储引擎通过多版本并发控制（MVCC，Multiversion Concurrency Control）机制解决了该问题。但是似乎并没有彻底解决这个问题：参见博客<a href="http://blog.csdn.net/cweeyii/article/details/70991230" target="_blank" rel="noopener">http://blog.csdn.net/cweeyii/article/details/70991230</a></p>
+<p>4.Serializable(可串行化)</p>
+<p>这是最高隔离级别，它通过强制事务排序，使之不可能冲突，从而解决幻读问题。简言之，它是在每个读的行上加上共享锁。这个级别，可能导致大量的超时现象和锁竞争。</p>
+<h2 id="数据库的各种锁"><a href="#数据库的各种锁" class="headerlink" title="数据库的各种锁"></a>数据库的各种锁</h2><p>InnoDB支持事务，支持行锁和表锁，Myisam不支持事务，只支持表锁</p>
+<p>共享锁（S）：允许一个事务去读一行，阻止其他事务获得相同数据集的排它锁</p>
+<p>排它锁（X）：允许获得排它锁的事务更新数据，阻止其他事务获得相同数据集的共享读锁和排他写锁</p>
+<p>意向共享锁（IS）：事务打算给数据行加行共享锁，事务在给一个数据行加共享锁前必须先取得该表的IS锁</p>
+<p>意向排它锁（IX）：事务打算给数据行加行排它锁，事务在给一个数据行加排它锁前必须先取得该表的IX锁</p>
+<p>说明：</p>
+<p>1）共享锁和排它锁都是行锁，意向锁都是表锁，应用中我们只会使用共享锁和排它锁，意向锁是mysql内部使用的，不需要用户干预。</p>
+<p>2）对于UPDATE、DELETE和INSERT语句，InnoDB会自动给涉及数据集加排它锁（X）,对于普通SELECT语句，InnoDB不会加任何锁，事务可以通过以下语句显示给记录集加共享锁或排它锁。</p>
+<p>共享锁（S）:SELECT * FROM table_name WHERE … LOCK IN SHARE MODE</p>
+<p>排它锁（X）:SELECT * FROM table_name WHERE … FOR UPDATE</p>
+<p><strong>对于锁定行记录后需要进行更新操作的应用，应该使用Select…for Update方式，获取排它锁。</strong></p>
+<p><strong>如果用共享锁，在读了之后再写会阻塞，可能会导致死锁，举例：</strong></p>
+<p>session 1：set autocommit = 0 (开启事务); select * from test where id = 1 lock in share mode;</p>
+<p>session 2：set autocommit = 0;select * from test where id = 1 lock in share mode;</p>
+<p>这个时候两个session同时持有id = 1这行数据的共享锁。这个时候我们再执行：</p>
+<p>session 1：update test set coll = ‘AAA’ where id = 1;</p>
+<p>这个时候session 1必须等待session 2退出事务或者等待直到锁超时</p>
+<p>如果我们在session 2里面执行：</p>
+<p>session 2: update test set coll = ‘BBB’ where id = 1;</p>
+<p>ERROR 1213 (40001) ：Deadlock found when trying to get lock;try restarting</p>
+<p>这个时候mySQL会检测到发生死锁，会中断当前事务该语句的执行，重新开启一个新的事务</p>
+<p><strong>MyISAM在执行查询语句（SELECT）前，会自动给涉及的所有表加读锁，在执行更新操作（Update、DELETE、INSERT等）前，会自动给涉及的表加写锁</strong></p>
+<p><strong>InnoDB行锁是通过给索引上的索引项加锁来实现的，因此InnoDB这种行锁实现特点意味着：只有通过索引条件检索数据，InnoDB才能使用行级锁，否则，InnoDB将使用表锁！</strong></p>
 
       
     </div>
@@ -590,9 +426,9 @@ return clone;
       
         <div class="post-tags">
           
-            <a href="/tags/java/" rel="tag"># java</a>
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
           
-            <a href="/tags/源码/" rel="tag"># 源码</a>
+            <a href="/tags/事务/" rel="tag"># 事务</a>
           
         </div>
       
@@ -605,8 +441,8 @@ return clone;
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/11/30/2017-11-30--hashMap源码分析/" rel="next" title="hashMap源码分析">
-                <i class="fa fa-chevron-left"></i> hashMap源码分析
+              <a href="/2018/03/21/MySQL索引之Index-Condition-Pushdown/" rel="next" title="MySQL索引之Index Condition Pushdown">
+                <i class="fa fa-chevron-left"></i> MySQL索引之Index Condition Pushdown
               </a>
             
           </div>
@@ -614,10 +450,6 @@ return clone;
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/11/30/2017-11-30--ArrayList源码分析/" rel="prev" title="ArrayList源码分析">
-                ArrayList源码分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -669,8 +501,17 @@ return clone;
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -743,6 +584,22 @@ return clone;
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#事务的四大特性"><span class="nav-number">1.</span> <span class="nav-text">事务的四大特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库针对事务的四种隔离级别"><span class="nav-number">2.</span> <span class="nav-text">数据库针对事务的四种隔离级别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库的各种锁"><span class="nav-number">3.</span> <span class="nav-text">数据库的各种锁</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

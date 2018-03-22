@@ -3,6 +3,71 @@
   
     
     <entry>
+      <title><![CDATA[MySQL事务之隔离级别详解]]></title>
+      <url>/2018/03/21/MySQL%E4%BA%8B%E5%8A%A1%E4%B9%8B%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E8%AF%A6%E8%A7%A3/</url>
+      <content type="html"><![CDATA[<h2 id="事务的四大特性"><a href="#事务的四大特性" class="headerlink" title="事务的四大特性"></a>事务的四大特性</h2><p>1.原子性</p>
+<p>事务必须是原子工作单元。对于数据修改，要么全都执行，要么全都不执行。</p>
+<p>2.一致性</p>
+<p>事务在完成时，必须使所有的数据都保持一致状态。（理解：事务开始和结束之间的中间状态不会被其他事务看到，举例：同一家银行内转账，A转给B 1000元，则A和B的总值是不变的，A减去1000，B加上1000的中间状态，外部是无感知的）</p>
+<a id="more"></a>
+<p>3.隔离性</p>
+<p>由并发事务所作的修改必须与任何其他并发事务所作的修改隔离。</p>
+<p>4.持久性</p>
+<p>事务完成之后，它对于系统的影响是永久性的。</p>
+<h2 id="数据库针对事务的四种隔离级别"><a href="#数据库针对事务的四种隔离级别" class="headerlink" title="数据库针对事务的四种隔离级别"></a>数据库针对事务的四种隔离级别</h2><p>脏读：某个事务已更新一份数据，另一个事务在此时读取了同一份数据（bao），如果前一个rollBack了，则后一个事务所读取的数据就会是不正确的。</p>
+<p>不可重复读：在一个事务的两次查询之中数据不一致，可能是两次查询过程中插入了一个事务更新的原有的数据。</p>
+<p>幻读：在一个事务的两次查询中数据数不一致。例如有一个事务查询了几列数据，而另一个事务却在此时插入了新的几列数据，先前的事务在接下来的查询中，就会发现有几列数据是它先前所没有的。</p>
+<p>1.Read Uncommitted(读取未提交内容)</p>
+<p>在该隔离级别，所有事务都可以看见其他未提交事务的执行结果。这种隔离级别可能导致脏读，不可重复读和幻读。</p>
+<p>2.Read Committed(读取提交内容)</p>
+<p>这是大多数数据库的默认隔离级别（MySQL不是），它满足了隔离的简单定义：一个事务只能看见自己已经提交的事务所做的改变，这种情况也会导致不可重复读，因为同一事务的其他实例在该实例处理其间可能会有新的commit，所以同一个select可能会有不同的结果。</p>
+<p>3.Repeatable Read(可重读)</p>
+<p>这是MySQL的默认事务隔离级别，它确保同一事务的多个实例在并发读取数据时，会看到同样的数据行。不过理论上，这会导致新的问题：幻读，据说InnoDB和Falcon存储引擎通过多版本并发控制（MVCC，Multiversion Concurrency Control）机制解决了该问题。但是似乎并没有彻底解决这个问题：参见博客<a href="http://blog.csdn.net/cweeyii/article/details/70991230" target="_blank" rel="noopener">http://blog.csdn.net/cweeyii/article/details/70991230</a></p>
+<p>4.Serializable(可串行化)</p>
+<p>这是最高隔离级别，它通过强制事务排序，使之不可能冲突，从而解决幻读问题。简言之，它是在每个读的行上加上共享锁。这个级别，可能导致大量的超时现象和锁竞争。</p>
+<h2 id="数据库的各种锁"><a href="#数据库的各种锁" class="headerlink" title="数据库的各种锁"></a>数据库的各种锁</h2><p>InnoDB支持事务，支持行锁和表锁，Myisam不支持事务，只支持表锁</p>
+<p>共享锁（S）：允许一个事务去读一行，阻止其他事务获得相同数据集的排它锁</p>
+<p>排它锁（X）：允许获得排它锁的事务更新数据，阻止其他事务获得相同数据集的共享读锁和排他写锁</p>
+<p>意向共享锁（IS）：事务打算给数据行加行共享锁，事务在给一个数据行加共享锁前必须先取得该表的IS锁</p>
+<p>意向排它锁（IX）：事务打算给数据行加行排它锁，事务在给一个数据行加排它锁前必须先取得该表的IX锁</p>
+<p>说明：</p>
+<p>1）共享锁和排它锁都是行锁，意向锁都是表锁，应用中我们只会使用共享锁和排它锁，意向锁是mysql内部使用的，不需要用户干预。</p>
+<p>2）对于UPDATE、DELETE和INSERT语句，InnoDB会自动给涉及数据集加排它锁（X）,对于普通SELECT语句，InnoDB不会加任何锁，事务可以通过以下语句显示给记录集加共享锁或排它锁。</p>
+<p>共享锁（S）:SELECT * FROM table_name WHERE … LOCK IN SHARE MODE</p>
+<p>排它锁（X）:SELECT * FROM table_name WHERE … FOR UPDATE</p>
+<p><strong>对于锁定行记录后需要进行更新操作的应用，应该使用Select…for Update方式，获取排它锁。</strong></p>
+<p><strong>如果用共享锁，在读了之后再写会阻塞，可能会导致死锁，举例：</strong></p>
+<p>session 1：set autocommit = 0 (开启事务); select * from test where id = 1 lock in share mode;</p>
+<p>session 2：set autocommit = 0;select * from test where id = 1 lock in share mode;</p>
+<p>这个时候两个session同时持有id = 1这行数据的共享锁。这个时候我们再执行：</p>
+<p>session 1：update test set coll = ‘AAA’ where id = 1;</p>
+<p>这个时候session 1必须等待session 2退出事务或者等待直到锁超时</p>
+<p>如果我们在session 2里面执行：</p>
+<p>session 2: update test set coll = ‘BBB’ where id = 1;</p>
+<p>ERROR 1213 (40001) ：Deadlock found when trying to get lock;try restarting</p>
+<p>这个时候mySQL会检测到发生死锁，会中断当前事务该语句的执行，重新开启一个新的事务</p>
+<p><strong>MyISAM在执行查询语句（SELECT）前，会自动给涉及的所有表加读锁，在执行更新操作（Update、DELETE、INSERT等）前，会自动给涉及的表加写锁</strong></p>
+<p><strong>InnoDB行锁是通过给索引上的索引项加锁来实现的，因此InnoDB这种行锁实现特点意味着：只有通过索引条件检索数据，InnoDB才能使用行级锁，否则，InnoDB将使用表锁！</strong></p>
+]]></content>
+      
+        <categories>
+            
+            <category> MySQL </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> MySQL </tag>
+            
+            <tag> 事务 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[MySQL索引之Index Condition Pushdown]]></title>
       <url>/2018/03/21/MySQL%E7%B4%A2%E5%BC%95%E4%B9%8BIndex-Condition-Pushdown/</url>
       <content type="html"><![CDATA[<h2 id="导入示例数据"><a href="#导入示例数据" class="headerlink" title="导入示例数据"></a>导入示例数据</h2><p>与之前的MySQL文章一样，使用Employees Sample Database，作为示例数据库。</p>
@@ -1101,34 +1166,6 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[JVM内存模型]]></title>
-      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
-      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
-<a id="more"></a>
-<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
-<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
-<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
-<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
-<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
-<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
-]]></content>
-      
-        <categories>
-            
-            <category> JVM </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> JVM </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[jstack及dump文件分析]]></title>
       <url>/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>jstack命令的用法为jstack pid</p>
@@ -1247,6 +1284,100 @@ void ( *valDestructor) (void *privdata,void *obj);
             <tag> 调优 </tag>
             
             <tag> jstack </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[JVM内存模型]]></title>
+      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
+      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+<a id="more"></a>
+<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
+<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
+<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
+<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
+<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
+<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
+]]></content>
+      
+        <categories>
+            
+            <category> JVM </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> JVM </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
             
         </tags>
         
@@ -1563,72 +1694,6 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
             <tag> 源码 </tag>
             
             <tag> spring </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
-</code></pre><a id="more"></a>
-<pre><code>        return true;
-
-    }
-
-    if (anObject instanceof String) {
-
-        String anotherString = (String) anObject;
-
-        int n = value.length;
-
-        if (n == anotherString.value.length) {
-
-            char v1[] = value;
-
-            char v2[] = anotherString.value;
-
-            int i = 0;
-
-            while (n-- != 0) {
-
-                if (v1[i] != v2[i])
-
-                        return false;
-
-                i++;
-
-            }
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-`}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
             
         </tags>
         

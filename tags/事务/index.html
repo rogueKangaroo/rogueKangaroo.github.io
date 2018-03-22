@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="java,源码," />
+  <meta name="keywords" content="技术,java,后台" />
 
 
 
@@ -81,18 +81,16 @@
 
 
 
-<meta name="description" content="LinkedList的基本存储结构是链表 LinkedList的节点元素的存储结构为： `private static class Node&amp;lt;E&amp;gt;{`       E item;       Node&amp;lt;E&amp;gt; next;">
-<meta name="keywords" content="java,源码">
-<meta property="og:type" content="article">
-<meta property="og:title" content="LinkedList源码分析">
-<meta property="og:url" content="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/index.html">
+<meta name="description" content="态度决定深度">
+<meta property="og:type" content="website">
+<meta property="og:title" content="有态度">
+<meta property="og:url" content="http://yoursite.com/tags/事务/index.html">
 <meta property="og:site_name" content="有态度">
-<meta property="og:description" content="LinkedList的基本存储结构是链表 LinkedList的节点元素的存储结构为： `private static class Node&amp;lt;E&amp;gt;{`       E item;       Node&amp;lt;E&amp;gt; next;">
+<meta property="og:description" content="态度决定深度">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-11-30T03:25:04.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="LinkedList源码分析">
-<meta name="twitter:description" content="LinkedList的基本存储结构是链表 LinkedList的节点元素的存储结构为： `private static class Node&amp;lt;E&amp;gt;{`       E item;       Node&amp;lt;E&amp;gt; next;">
+<meta name="twitter:title" content="有态度">
+<meta name="twitter:description" content="态度决定深度">
 
 
 
@@ -122,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/"/>
+  <link rel="canonical" href="http://yoursite.com/tags/事务/"/>
 
 
 
 
 
-  <title>LinkedList源码分析 | 有态度</title>
+  <title>标签: 事务 | 有态度</title>
   
 
 
@@ -147,7 +145,7 @@
     
   
 
-  <div class="container sidebar-position-left page-post-detail">
+  <div class="container sidebar-position-left ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -251,393 +249,54 @@
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-expand">
-    
+  
+  
+  
+  <div class="post-block tag">
 
-  
+    <div id="posts" class="posts-collapse">
+      <div class="collection-title">
+        <h1>事务<small>标签</small>
+        </h1>
+      </div>
 
-  
-  
-  
+      
+        
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/30/2017-11-30--LinkedList源码分析/">
+    <header class="post-header">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="刘凯召">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/headimg.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="有态度">
-    </span>
-
-    
-      <header class="post-header">
-
+      <h2 class="post-title">
         
+            <a class="post-title-link" href="/2018/03/21/MySQL事务之隔离级别详解/" itemprop="url">
+              
+                <span itemprop="name">MySQL事务之隔离级别详解</span>
+              
+            </a>
         
-          <h1 class="post-title" itemprop="name headline">LinkedList源码分析</h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T10:30:00+08:00">
-                2017-11-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/源码/" itemprop="url" rel="index">
-                    <span itemprop="name">源码</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        <p>LinkedList的基本存储结构是链表</p>
-<p>LinkedList的节点元素的存储结构为：</p>
-<pre><code>`private static class Node&lt;E&gt;{`
-
-     E item;
-
-     Node&lt;E&gt; next;
-</code></pre><a id="more"></a>
-<pre><code>     Node&lt;E&gt; prev;
-
-     Node(Node&lt;E&gt; prev,E element,Node&lt;E&gt; next){
-
-          this.item = element;
-
-          this.next = next;
-
-          this.prev = prev;
-
-     }
-
-`}`
-</code></pre><p>LinkedList的add源码为：</p>
-<p><code>public boolean add(E e){</code></p>
-<pre><code>linkLast(e);
-
-return true;
-</code></pre><p><code>}</code></p>
-<p><code>void linkLast(E e){</code></p>
-<pre><code>final Node&lt;E&gt; l = last;
-
-final Node&lt;E&gt; newNode = new Node&lt;&gt;(l,e,null);
-
-last = newNode;
-
-if(l==null)
-
-     first = newNode;
-
-else
-
-     l.next = newNode;
-
-size++;
-
-modCount++;
-</code></pre><p><code>}</code></p>
-<p>因为LinkedList的基本结构是链表，所以add就是在链表的末尾添加一个节点，然后size++，当last==null代表改list为空的，所以头结点置为newNode</p>
-<p>linkedList的remove源码为：</p>
-<p><code>public boolean remove(Object o){</code></p>
-<pre><code>if(o==null){
-
-     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
-
-          if(x.item == null){
-
-               unlink(x);
-
-               return true;
-
-          }
-
-     }
-
-}else{
-
-     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
-
-          if(o.equals(x.item)){
-
-               unlink(x);
-
-               return true;
-
-          }
-
-     }
-
-}
-
-return false;
-</code></pre><p><code>}</code></p>
-<p>linkedList的remove就是从头遍历节点，然后调用unlink来remove节点，unlink的源码如下：</p>
-<p>   <code>E unlink(Node&lt;E&gt; x){</code></p>
-<pre><code>     final E element = x.item;
-
-     final Node&lt;E&gt; next = x.next;
-
-     final Node&lt;E&gt; prev = x.prev;
-
-     if(prev == null){
-
-          first=next;
-
-     }else{
-
-          prev.next = next;
-
-          x.prev = null;
-
-     }
-
-     if(next == null){
-
-          last=prev;
-
-     }else{
-
-          next.prev=prev;
-
-          x.next = null;
-
-     }
-
-     x.item = null;
-
-     size--;
-
-     modCount++;
-
-     return element;
-
-}
-</code></pre><p>``unlink就是把元素的前节点的next指向该元素的next,把元素的后节点的prev指向该元素的prev,然后把该元素的prev和next和item置为null,方便GC回收。</p>
-<p>linkedList的get的源码为：</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>checkElementIndex(index);
-
-return node(index).item;
-</code></pre><p><code>}</code></p>
-<p>get的时候先检测了index是否&lt;0或者大于size,若是则抛出异常。node()的源码为：</p>
-<p>N<code>ode&lt;E&gt; node(int index){</code></p>
-<pre><code>if(index&lt;(size&gt;&gt;1)){
-
-     Node&lt;E&gt; x = first;
-
-     for(int i=0;i&lt;index;i++)
-
-          x=x.next;
-
-     return x;
-
-}else{
-
-     Node&lt;E&gt; x = last;
-
-     for(int i=size-1;i&gt;index;i--)
-
-          x = x.prev;
-
-     return x;
-
-}
-</code></pre><p><code>}</code></p>
-<p>node方法就是先判断一下index接近first还是last，然后决定从哪个方向开始查找。</p>
-<p>linkedList的contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)!=-1;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>int index = 0;
-
-if(o==null){
-
-     for(Node&lt;E&gt; x=first;x!=null;x=x.next){
-
-          if(x.item == null)
-
-               return index;
-
-          index++;
-
-     }
-
-}else{
-
-     for(Node&lt;E&gt; x = first;x!=null;x=x.next){
-
-             if(o.equals(x.item))
-
-                    return index;
-
-               index++;
-
-     }
-
-}
-
-return -1;
-</code></pre><p><code>}</code></p>
-<p>contains就是从first开始遍历，查到就返回index</p>
-<p>linkedList的clone的源码为：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>LinkedList&lt;E&gt; clone = superClone();
-
-clone.first = clone.last=null;
-
-clone.size=0;
-
-clone.modCount = 0;
-
-for(Node&lt;E&gt; x=first;x!=null;x=x.next)
-
-     clone.add(x.item);
-
-return clone;
-</code></pre><p><code>}</code></p>
-<p>``LinkedList的clone是浅克隆，只是克隆了引用。</p>
-
-      
-    </div>
-    
-    
-    
-
-    
-      <div>
-        <div>
-    
-        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
-    
-</div>
-
-
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2018-03-21T17:39:56+08:00"
+              content="2018-03-21" >
+          03-21
+        </time>
       </div>
-    
-  
-    
 
-    
-
-    
-
-    <footer class="post-footer">
-      
-        <div class="post-tags">
-          
-            <a href="/tags/java/" rel="tag"># java</a>
-          
-            <a href="/tags/源码/" rel="tag"># 源码</a>
-          
-        </div>
-      
-
-      
-      
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2017/11/30/2017-11-30--hashMap源码分析/" rel="next" title="hashMap源码分析">
-                <i class="fa fa-chevron-left"></i> hashMap源码分析
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/11/30/2017-11-30--ArrayList源码分析/" rel="prev" title="ArrayList源码分析">
-                ArrayList源码分析 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
-        </div>
-      
-
-      
-      
-    </footer>
-  </div>
-  
-  
-  
+    </header>
   </article>
 
 
-
-    <!-- <div class="post-spread">
       
-    </div> -->
+    </div>
+
   </div>
+  
+  
+  
+
+  
 
 
           </div>
@@ -645,10 +304,6 @@ return clone;
 
 
           
-
-  
-
-
 
         </div>
         
@@ -896,10 +551,6 @@ return clone;
 
 
   
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
-
-
 
   
 
