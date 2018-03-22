@@ -14,7 +14,7 @@
 <p>由并发事务所作的修改必须与任何其他并发事务所作的修改隔离。</p>
 <p>4.持久性</p>
 <p>事务完成之后，它对于系统的影响是永久性的。</p>
-<h2 id="数据库针对事务的四种隔离级别"><a href="#数据库针对事务的四种隔离级别" class="headerlink" title="数据库针对事务的四种隔离级别"></a>数据库针对事务的四种隔离级别</h2><p>脏读：某个事务已更新一份数据，另一个事务在此时读取了同一份数据（bao），如果前一个rollBack了，则后一个事务所读取的数据就会是不正确的。</p>
+<h2 id="数据库针对事务的四种隔离级别"><a href="#数据库针对事务的四种隔离级别" class="headerlink" title="数据库针对事务的四种隔离级别"></a>数据库针对事务的四种隔离级别</h2><p>脏读：某个事务已更新一份数据，另一个事务在此时读取了同一份数据，如果前一个rollBack了，则后一个事务所读取的数据就会是不正确的。</p>
 <p>不可重复读：在一个事务的两次查询之中数据不一致，可能是两次查询过程中插入了一个事务更新的原有的数据。</p>
 <p>幻读：在一个事务的两次查询中数据数不一致。例如有一个事务查询了几列数据，而另一个事务却在此时插入了新的几列数据，先前的事务在接下来的查询中，就会发现有几列数据是它先前所没有的。</p>
 <p>1.Read Uncommitted(读取未提交内容)</p>
@@ -1318,72 +1318,6 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
-</code></pre><a id="more"></a>
-<pre><code>        return true;
-
-    }
-
-    if (anObject instanceof String) {
-
-        String anotherString = (String) anObject;
-
-        int n = value.length;
-
-        if (n == anotherString.value.length) {
-
-            char v1[] = value;
-
-            char v2[] = anotherString.value;
-
-            int i = 0;
-
-            while (n-- != 0) {
-
-                if (v1[i] != v2[i])
-
-                        return false;
-
-                i++;
-
-            }
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-`}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[spring aop源码分析]]></title>
       <url>/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>源码分析：</p>
@@ -1700,149 +1634,52 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
     </entry>
     
     <entry>
-      <title><![CDATA[ArrayList源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
-<p><code>ArrayList 的add源码为：</code></p>
-<pre><code>public boolean add(E e){
-
-     ensureCapacityInternal(size +1);
-
-     elementData[size++]==e;
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
 </code></pre><a id="more"></a>
-<pre><code>     return true;
+<pre><code>        return true;
 
-}
-</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
-<p>其中的ensureCapacityInternal函数的源码为：</p>
-<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
-<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+    }
 
-     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+    if (anObject instanceof String) {
 
-}
+        String anotherString = (String) anObject;
 
-ensureExplicitCapacity(minCapacity);
-</code></pre><p><code>}</code></p>
-<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
-<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+        int n = value.length;
 
-     modCount++;
+        if (n == anotherString.value.length) {
 
-     if(minCapacity - elementData.length&gt;0){
+            char v1[] = value;
 
-          grow(minCapacity);
+            char v2[] = anotherString.value;
 
-     }
+            int i = 0;
 
-}
-</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
-<p>grow()的源码为：</p>
-<p><code>private void grow(int minCapacity){</code></p>
-<pre><code>int oldCapacity = elementData.length;
+            while (n-- != 0) {
 
-int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+                if (v1[i] != v2[i])
 
-if(newCapacity - minCapacity&lt;0)
+                        return false;
 
-     newCapacity=minCapacity;
+                i++;
 
-if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+            }
 
-     newCapacity = hugeCapacity(minCapacity);
+            return true;
 
- elementData = Arrays.copyof(element,newCapacity);
-</code></pre><p><code>}</code></p>
-<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
-<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
-<p><code>public E remove(int index){</code></p>
-<pre><code>rangeCheck(index);
+        }
 
-modCount++;
+    }
 
-E oldValue=elementData(index);
+    return false;
 
-int numMoved = size -index -1;
-
-if(numMoved&gt;0){
-
-     System.arraycopy(elementData,index+1,elementData,index,numMoved);
-
-}
-
-elementData[--size]=null;
-
-return oldValue;
-</code></pre><p> <code>}</code></p>
-<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
-<p>我们再看get的源码:</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>rangeCheck(index);
-
-checkForComodification();
-
-return ArrayList.this.elementData(offset+index);
-</code></pre><p><code>}</code></p>
-<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
-<p><code>public E set(int index,E e){</code></p>
-<pre><code>rangeCheck(index);
-
-checkForComodification();
-
-E oldValue = Array.this.elementData(offset + index);
-
-ArrayList.this.elementData[offset +index]=e;
-
-return oldValue;
-</code></pre><p><code>}</code></p>
-<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
-<p>contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)&gt;=0;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>if(o==null){
-
-     for(int i=0;i&lt;size;i++){
-
-          if(elementData[i]==null)
-
-               return i;
-
-     }
-
-}else {
-
-     for(int i=0;i&lt;size;i++){
-
-          if(o.equals(elementData[i))
-
-               return i;
-
-     }
-
-}
-
-return -1;
-</code></pre><p><code>}</code></p>
-<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
-<p>还有clone的源码：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>try{
-
-     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
-
-     v.elementData = Arrays.copyof(elementData,size);
-
-     v.modCount = 0;
-
-}catch(CloneNotSupportedException e){
-
-     throw new InternalError();
-
-}
-</code></pre><p><code>}</code></p>
-<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
 ]]></content>
       
         <categories>
@@ -2072,6 +1909,169 @@ for(Node&lt;E&gt; x=first;x!=null;x=x.next)
 return clone;
 </code></pre><p><code>}</code></p>
 <p>``LinkedList的clone是浅克隆，只是克隆了引用。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[ArrayList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
+</code></pre><a id="more"></a>
+<pre><code>     return true;
+
+}
+</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
+<p>其中的ensureCapacityInternal函数的源码为：</p>
+<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
+<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+
+     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+
+}
+
+ensureExplicitCapacity(minCapacity);
+</code></pre><p><code>}</code></p>
+<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
+<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+
+     modCount++;
+
+     if(minCapacity - elementData.length&gt;0){
+
+          grow(minCapacity);
+
+     }
+
+}
+</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
+<p>grow()的源码为：</p>
+<p><code>private void grow(int minCapacity){</code></p>
+<pre><code>int oldCapacity = elementData.length;
+
+int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+
+if(newCapacity - minCapacity&lt;0)
+
+     newCapacity=minCapacity;
+
+if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+
+     newCapacity = hugeCapacity(minCapacity);
+
+ elementData = Arrays.copyof(element,newCapacity);
+</code></pre><p><code>}</code></p>
+<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
+<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
+<p><code>public E remove(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+modCount++;
+
+E oldValue=elementData(index);
+
+int numMoved = size -index -1;
+
+if(numMoved&gt;0){
+
+     System.arraycopy(elementData,index+1,elementData,index,numMoved);
+
+}
+
+elementData[--size]=null;
+
+return oldValue;
+</code></pre><p> <code>}</code></p>
+<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
+<p>我们再看get的源码:</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+return ArrayList.this.elementData(offset+index);
+</code></pre><p><code>}</code></p>
+<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
+<p><code>public E set(int index,E e){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+E oldValue = Array.this.elementData(offset + index);
+
+ArrayList.this.elementData[offset +index]=e;
+
+return oldValue;
+</code></pre><p><code>}</code></p>
+<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
+<p>contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)&gt;=0;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>if(o==null){
+
+     for(int i=0;i&lt;size;i++){
+
+          if(elementData[i]==null)
+
+               return i;
+
+     }
+
+}else {
+
+     for(int i=0;i&lt;size;i++){
+
+          if(o.equals(elementData[i))
+
+               return i;
+
+     }
+
+}
+
+return -1;
+</code></pre><p><code>}</code></p>
+<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
+<p>还有clone的源码：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>try{
+
+     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
+
+     v.elementData = Arrays.copyof(elementData,size);
+
+     v.modCount = 0;
+
+}catch(CloneNotSupportedException e){
+
+     throw new InternalError();
+
+}
+</code></pre><p><code>}</code></p>
+<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
 ]]></content>
       
         <categories>
