@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-03-22T09:48:42.000Z</updated>
+  <updated>2018-04-12T09:43:29.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Paxos算法分析</title>
+    <link href="http://yoursite.com/2018/04/12/Paxos%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2018/04/12/Paxos算法分析/</id>
+    <published>2018-04-12T02:51:08.000Z</published>
+    <updated>2018-04-12T09:43:29.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>Paxos算法是基于消息传递且具有高度容错特性的一致性算法。</p><p>在常见的分布式系统中，总会发生诸如机器宕机或网络异常（包括消息的延迟、丢失、重复、乱序，还有网络分区）等情况。Paxos算法需要解决的问题就是如何在一个可能发生上述异常的分布式系统中，快速且正确地在集群内部对某个数据的值达成一致，并且保证不论发生以上任何异常，都不会破坏整个系统的一致性。</p><a id="more"></a><h2 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h2><p>在Paxos算法中，有三种角色：</p><p>Proposer（提出提案者）</p><p>Acceptor（提案接收者）</p><p>Learners（提案学习者）</p><p>在具体的实现中，一个进程可能同时充当多重角色，比如一个进程可能既是Proposer又是Acceptor又是Learner</p><p>还有个概念是提案Proposal。最终要达成一致的value就在提案里。</p><h2 id="最终目的"><a href="#最终目的" class="headerlink" title="最终目的"></a>最终目的</h2><p>希望达到所有acceptor接受的提案的value值是一致的</p><h2 id="推导过程"><a href="#推导过程" class="headerlink" title="推导过程"></a>推导过程</h2><h5 id="阶段1"><a href="#阶段1" class="headerlink" title="阶段1"></a>阶段1</h5><p>acceptor接受它接收到的第一个proposal，并选定proposal中的value。</p><p>但是：</p><p>如果每个acceptor只接收一个proposal，那么多个proposer提出的多个proposal就可能分别被不同的acceptor接收并选定，这样的话就会出现不一致。</p><h5 id="阶段2"><a href="#阶段2" class="headerlink" title="阶段2"></a>阶段2</h5><p>acceptor可以接收多个proposal，这样一个proposal就由方案编号和value组成，一个方案选定必须有超过半数的acceptor接受。</p><p>但是：</p><p>如果有5个acceptor，其中一个宕机，proposer2提出一个proposal[M1,V1]，并被超过半数acceptor接受，此时宕机的acceptor1恢复，且此时proposal2向其发送了一个proposal[M2，V2] (M2&gt;M1,V2!=V1)，因为此acceptor此前没接收过proposal，所以它会接受该proposal，这样就会又不一致了。</p><h5 id="阶段3"><a href="#阶段3" class="headerlink" title="阶段3"></a>阶段3</h5><p>被acceptor选定的提案都具有相同的value值。即：如果某个value为v的提案被选定了，那么每个编号更高的被选定的提案的value必须也是v，这就引出了Proposal的生成，对于任意的M和V,如果提案[M，V]被提出，那么存在一个半数以上的Acceptor组成的集合S,满足以下两个条件中的任意一个：</p><p>S中每个Acceptor都没有接受过编号小于N的提案。</p><p>S中Acceptor接受过的最大编号的提案的value为V。</p><p>为满足以上要求，在proposer提出方案之前，要去learn每个acceptor选定的value，然后决定自己的value值。</p><p>提案生成算法：</p><p>proposer选择一个新的提案编号M,然后向某个acceptor集合（半数以上）发送请求，要求该集合中的每个acceptor做出如下响应：</p><p>（a）向proposer承诺保证不接收任何编号小于M的提案</p><p>（b）如果Acceptor已经接受过提案，那么就向Proposer响应已经接受过得编号小于M的最大编号的提案。</p><p>如果proposer收到超过半数的acceptor的响应，那么它就可以生成编号为M,value为V的提案[M，V]。这里的V是所有响应的acceptor中编号最大的提案的value。如果所有响应中没有提案，则V就由proposer自己选择。</p><p>生成提案后，proposer将该提案发送给半数以上的Acceptor集合，并期望这些Acceptor能接受该提案。</p><p>但是：</p><p>如果有两个proposer,p1发出提案[M1,V1]，learn的结果是收到半数acceptor响应，acceptor承诺不接收小于M1的提案。此时p2提出提案[M2，V2],learn的结果是收到半数acceptor响应并承诺不接收小于M2的提案（M2&gt;M1），接着p1因为收到半数acceptor的响应，故将提案提出，但是因为acceptor后来接受过M2，所以会忽略p1的提案，此时p1又会生成提案M3(M3&gt;M2)，这样p2的提案又会被忽略，如此循环，就会没有提案被接受</p><h5 id="阶段4"><a href="#阶段4" class="headerlink" title="阶段4"></a>阶段4</h5><p>通过选取一个主proposer，只有主proposer才能提出提案。那其实在主proposer任职期间也就不需要learn了。</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;定义&quot;&gt;&lt;a href=&quot;#定义&quot; class=&quot;headerlink&quot; title=&quot;定义&quot;&gt;&lt;/a&gt;定义&lt;/h2&gt;&lt;p&gt;Paxos算法是基于消息传递且具有高度容错特性的一致性算法。&lt;/p&gt;
+&lt;p&gt;在常见的分布式系统中，总会发生诸如机器宕机或网络异常（包括消息的延迟、丢失、重复、乱序，还有网络分区）等情况。Paxos算法需要解决的问题就是如何在一个可能发生上述异常的分布式系统中，快速且正确地在集群内部对某个数据的值达成一致，并且保证不论发生以上任何异常，都不会破坏整个系统的一致性。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="算法" scheme="http://yoursite.com/categories/%E7%AE%97%E6%B3%95/"/>
+    
+    
+      <category term="算法，分布式，Paxos" scheme="http://yoursite.com/tags/%E7%AE%97%E6%B3%95%EF%BC%8C%E5%88%86%E5%B8%83%E5%BC%8F%EF%BC%8CPaxos/"/>
+    
+  </entry>
   
   <entry>
     <title>MySQL事务之隔离级别详解</title>
@@ -454,6 +477,28 @@
   </entry>
   
   <entry>
+    <title>JVM内存模型</title>
+    <link href="http://yoursite.com/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"/>
+    <id>http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/</id>
+    <published>2017-11-30T03:50:00.000Z</published>
+    <updated>2017-11-30T03:55:22.000Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p><a id="more"></a><p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p><h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p><p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p><p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p><h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p><h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;程序计数器（线程私有的）&quot;&gt;&lt;a href=&quot;#程序计数器（线程私有的）&quot; class=&quot;headerlink&quot; title=&quot;程序计数器（线程私有的）&quot;&gt;&lt;/a&gt;程序计数器（线程私有的）&lt;/h3&gt;&lt;p&gt;程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="JVM" scheme="http://yoursite.com/categories/JVM/"/>
+    
+    
+      <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
+    
+  </entry>
+  
+  <entry>
     <title>jstack及dump文件分析</title>
     <link href="http://yoursite.com/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/"/>
     <id>http://yoursite.com/2017/11/30/2017-11-30--jstack及dump文件分析/</id>
@@ -477,55 +522,6 @@
       <category term="调优" scheme="http://yoursite.com/tags/%E8%B0%83%E4%BC%98/"/>
     
       <category term="jstack" scheme="http://yoursite.com/tags/jstack/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>JVM内存模型</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/</id>
-    <published>2017-11-30T03:50:00.000Z</published>
-    <updated>2017-11-30T03:55:22.000Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p><a id="more"></a><p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p><h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p><p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p><p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p><h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p><h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;h3 id=&quot;程序计数器（线程私有的）&quot;&gt;&lt;a href=&quot;#程序计数器（线程私有的）&quot; class=&quot;headerlink&quot; title=&quot;程序计数器（线程私有的）&quot;&gt;&lt;/a&gt;程序计数器（线程私有的）&lt;/h3&gt;&lt;p&gt;程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="JVM" scheme="http://yoursite.com/categories/JVM/"/>
-    
-    
-      <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>spring aop源码分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--spring-aop源码分析/</id>
-    <published>2017-11-30T03:00:00.000Z</published>
-    <updated>2017-11-30T03:25:24.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>源码分析：</p><p>这里先描述aop的具体流程：</p><p>一、解析xml</p><p>1.加载xml资源文件时解析<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true"></aop:aspectj-autoproxy></p><a id="more"></a><p>2.在parse函数里面解析这个标签①加载一个bean，这个bean的功能是根据注解来给相应的bean创建代理②处理proxy-target-class属性，当这个属性为true时，创建的代理是CGLIB 代理，处理 expose-proxy这个属性，这个属性为true，允许用户通过上下文的方式实现类内部调用也能增强。</p><p>二、加载bean</p><p>1.初始化bean的时候，在bean initialize之后会调用postProcessObjectFromFactoryBean方法</p><p>2.该方法中调用wrapIfNecessary方法，该方法中有两个重要的步骤①getAdvicesAndAdvisorsForBean获取该bean的所有拦截器，这个方法中分几个步骤：获取beanFactory中所有的bean，遍历找出AspectJ注解的bean,获取bean中所有的拦截器，存到缓存中，然后找到适合当前bean的所有拦截器②创建代理createProxy,这个方法中会根据用户配置比如proxy-target-class，被代理类是否implement接口等等来决定是否用jdk代理还是CGLIB代理，然后创建相应代理。</p><p>这里讲解一下jdk代理和CGLIB代理的区别和两者的源码分析：</p><p>jdk代理：是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理</p><p>CGLIB代理：利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理</p><p>1.如果目标对象实现了接口，默认情况下采取jdk的动态代理</p><p>2.如果目标对象实现了接口，可以强制采用CGLIB代理</p><p>3.如果目标没有实现接口，只能采用CGLIB代理</p><p>jdk代理使用方法：</p><p><code>public interface Say {</code></p><pre><code>void say();</code></pre><p><code>}</code></p><p><code>public class SayImpl implements Say {</code></p><pre><code>@Overridepublic void say() {    System.out.println(&quot;say hello&quot;);}</code></pre><p><code>}</code></p><p><code>public class MyInvocationHandler implements InvocationHandler{</code></p><pre><code>private Object targetObject;@Overridepublic Object invoke(Object proxy, Method method, Object[] args) throws Throwable {    System.out.println(&quot;say before&quot;);    Object object = method.invoke(targetObject,args);    System.out.println(&quot;say after&quot;);    return object;}public Object newProxy(Object targetObject){    this.targetObject=targetObject;    return Proxy.newProxyInstance(targetObject.getClass().getClassLoader(),targetObject.getClass().getInterfaces(),this);}</code></pre><p><code>}</code></p><p><code>public class TestJDKProxy {</code></p><pre><code>public static void main(String[] args){    MyInvocationHandler myInvocationHandler = new MyInvocationHandler();    Say say = (Say) myInvocationHandler.newProxy(new SayImpl());    say.say();}</code></pre><p><code>}</code></p><p>根据源码分析生成的代理类叫ProxyN，所以在生成代理之后，把这个类写到硬盘，通过以下这个方法：</p><p><code>public class Util {</code></p><pre><code>public static void writeProxyClassToHardDisk(String path){    byte[] classFile = ProxyGenerator.generateProxyClass(&quot;$Proxy0&quot;, SayImpl.class.getInterfaces());    FileOutputStream out = null;    try{        out = new FileOutputStream(path);        out.write(classFile);        out.flush();    }catch (Exception e){        e.printStackTrace();    }finally {        try{            out.close();        }catch (Exception e){            e.printStackTrace();        }    }}</code></pre><p><code>}</code></p><p>此时通过反编译生成的class文件，即可得到生成代理类的源码如下：</p><p><code>public final class $Proxy0 extends Proxy</code></p><p>   implements Say</p><p><code>{</code></p><p>   private static Method m3;</p><p>   private static Method m1;</p><p>   private static Method m0;</p><p>   private static Method m2;</p><p>   public $Proxy0(InvocationHandler invocationhandler)</p><p>   {</p><pre><code>super(invocationhandler);</code></pre><p>   }</p><p>   public final void say()</p><p>   {</p><pre><code>try{   super.h.invoke(this, m3, null);   return;}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final boolean equals(Object obj)</p><p>   {</p><pre><code>try{   return ((Boolean)super.h.invoke(this, m1, new Object[] {      obj   })).booleanValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final int hashCode()</p><p>   {</p><pre><code>try{   return ((Integer)super.h.invoke(this, m0, null)).intValue();}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   public final String toString()</p><p>   {</p><pre><code>try{   return (String)super.h.invoke(this, m2, null);}catch (Error ) { }catch (Throwable throwable){   throw new UndeclaredThrowableException(throwable);}</code></pre><p>   }</p><p>   static </p><p>   {</p><pre><code>try{   m3 = Class.forName(&quot;com.springapp.mvc.Proxy.jdkProxy.Say&quot;).getMethod(&quot;say&quot;, new Class[0]);   m1 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;equals&quot;, new Class[] {      Class.forName(&quot;java.lang.Object&quot;)   });   m0 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;hashCode&quot;, new Class[0]);   m2 = Class.forName(&quot;java.lang.Object&quot;).getMethod(&quot;toString&quot;, new Class[0]);}catch (NoSuchMethodException nosuchmethodexception){   throw new NoSuchMethodError(nosuchmethodexception.getMessage());}catch (ClassNotFoundException classnotfoundexception){   throw new NoClassDefFoundError(classnotfoundexception.getMessage());}</code></pre><p>   }</p><p><code>}</code></p><p>cglib代理的使用方法：</p><p><code>public class SayHello {</code></p><pre><code>public void say(){    System.out.println(&quot;hello everyone&quot;);}</code></pre><p><code>}</code></p><p><code>public class CglibProxy implements MethodInterceptor {</code></p><pre><code>private Enhancer enhancer = new Enhancer();public Object getProxy(Class clazz){    enhancer.setSuperclass(clazz);    enhancer.setCallback(this);    return enhancer.create();}@Overridepublic Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {    System.out.println(&quot;前置代理&quot;);    Object res = methodProxy.invokeSuper(o,objects);    System.out.println(&quot;后置处理&quot;);    return res;}</code></pre><p><code>}</code></p><p><code>public class DoCglib {</code></p><pre><code>public static void main(String[] args){    CglibProxy proxy = new CglibProxy();    SayHello proxyImpl = (SayHello)proxy.getProxy(SayHello.class);    proxyImpl.say();}</code></pre><p><code>}</code></p><p>spring中jdk代理的处理：</p><p>spring中的jdkDynamicAopProxy确实实现了InvocationHandler接口，其中也包含了getProxy和invoke。其中getProxy函数创建了代理，</p><p>invoke函数里面包含了AOP的核心逻辑，这个方法逻辑：</p><p>1.处理equals方法</p><p>2.处理hash方法</p><p>3.处理expose属性，当这个属性为true时，暴露代理来实现内部调用是能通过代理实现增强</p><p>4.获取当前方法的所有拦截器</p><p>5.如果没有拦截器,那么直接调用切点方法，如果有会将拦截器封装到ReflectiveMethodInvocation</p><p>6.调用ReflectiveMethodInvocation类中的proceed方法</p><p>7.proceed方法中维护了链接调用的计数器，记录当前调用链接的位置，他会根据传入的拦截器链获取要执行的拦截器，然后实例化InterceptorAndDynamicMethodMatcher,InterceptorAndDynamicMethodMatcher中有两个属性MethodInterceptor、MethodMatcher,这两个属性的作用分别是：MethodInterceptor是一个接口，所以他会根据传入不同的拦截器来分发给不同的继承类来实现具体逻辑，比如传入前置拦截器，具体实现则交给了MethodBeforeAdviceInterceptor，在这个类invoke（会传入当前类当参数）方法中会先调用MethodBeforeAdvice的before方法，然后再调用传入类的proceed方法，以此循环，最终执行完拦截器链中的所有拦截器；MethodMatcher是方法匹配器，来检查当前拦截器是否适用当前方法，如果适用则执行拦截器，不适用则略过当前拦截器。</p><p>spring中cglib代理的处理：</p><p>三、调用方法</p><p>jdk代理：由于生成了代理匿名类，所以当调用被代理类的某个方法时，会调用代理类中的invoke方法，具体实现上面已经讲到了。</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;源码分析：&lt;/p&gt;
-&lt;p&gt;这里先描述aop的具体流程：&lt;/p&gt;
-&lt;p&gt;一、解析xml&lt;/p&gt;
-&lt;p&gt;1.加载xml资源文件时解析&lt;aop:aspectj-autoproxy expose-proxy=&quot;true&quot; proxy-target-class=&quot;true&quot;&gt;&lt;/aop:aspectj-autoproxy&gt;&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="源码" scheme="http://yoursite.com/categories/%E6%BA%90%E7%A0%81/"/>
-    
-    
-      <category term="源码" scheme="http://yoursite.com/tags/%E6%BA%90%E7%A0%81/"/>
-    
-      <category term="spring" scheme="http://yoursite.com/tags/spring/"/>
     
   </entry>
   

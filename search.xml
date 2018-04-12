@@ -3,6 +3,55 @@
   
     
     <entry>
+      <title><![CDATA[Paxos算法分析]]></title>
+      <url>/2018/04/12/Paxos%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>Paxos算法是基于消息传递且具有高度容错特性的一致性算法。</p>
+<p>在常见的分布式系统中，总会发生诸如机器宕机或网络异常（包括消息的延迟、丢失、重复、乱序，还有网络分区）等情况。Paxos算法需要解决的问题就是如何在一个可能发生上述异常的分布式系统中，快速且正确地在集群内部对某个数据的值达成一致，并且保证不论发生以上任何异常，都不会破坏整个系统的一致性。</p>
+<a id="more"></a>
+<h2 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h2><p>在Paxos算法中，有三种角色：</p>
+<p>Proposer（提出提案者）</p>
+<p>Acceptor（提案接收者）</p>
+<p>Learners（提案学习者）</p>
+<p>在具体的实现中，一个进程可能同时充当多重角色，比如一个进程可能既是Proposer又是Acceptor又是Learner</p>
+<p>还有个概念是提案Proposal。最终要达成一致的value就在提案里。</p>
+<h2 id="最终目的"><a href="#最终目的" class="headerlink" title="最终目的"></a>最终目的</h2><p>希望达到所有acceptor接受的提案的value值是一致的</p>
+<h2 id="推导过程"><a href="#推导过程" class="headerlink" title="推导过程"></a>推导过程</h2><h5 id="阶段1"><a href="#阶段1" class="headerlink" title="阶段1"></a>阶段1</h5><p>acceptor接受它接收到的第一个proposal，并选定proposal中的value。</p>
+<p>但是：</p>
+<p>如果每个acceptor只接收一个proposal，那么多个proposer提出的多个proposal就可能分别被不同的acceptor接收并选定，这样的话就会出现不一致。</p>
+<h5 id="阶段2"><a href="#阶段2" class="headerlink" title="阶段2"></a>阶段2</h5><p>acceptor可以接收多个proposal，这样一个proposal就由方案编号和value组成，一个方案选定必须有超过半数的acceptor接受。</p>
+<p>但是：</p>
+<p>如果有5个acceptor，其中一个宕机，proposer2提出一个proposal[M1,V1]，并被超过半数acceptor接受，此时宕机的acceptor1恢复，且此时proposal2向其发送了一个proposal[M2，V2] (M2&gt;M1,V2!=V1)，因为此acceptor此前没接收过proposal，所以它会接受该proposal，这样就会又不一致了。</p>
+<h5 id="阶段3"><a href="#阶段3" class="headerlink" title="阶段3"></a>阶段3</h5><p>被acceptor选定的提案都具有相同的value值。即：如果某个value为v的提案被选定了，那么每个编号更高的被选定的提案的value必须也是v，这就引出了Proposal的生成，对于任意的M和V,如果提案[M，V]被提出，那么存在一个半数以上的Acceptor组成的集合S,满足以下两个条件中的任意一个：</p>
+<p>S中每个Acceptor都没有接受过编号小于N的提案。</p>
+<p>S中Acceptor接受过的最大编号的提案的value为V。</p>
+<p>为满足以上要求，在proposer提出方案之前，要去learn每个acceptor选定的value，然后决定自己的value值。</p>
+<p>提案生成算法：</p>
+<p>proposer选择一个新的提案编号M,然后向某个acceptor集合（半数以上）发送请求，要求该集合中的每个acceptor做出如下响应：</p>
+<p>（a）向proposer承诺保证不接收任何编号小于M的提案</p>
+<p>（b）如果Acceptor已经接受过提案，那么就向Proposer响应已经接受过得编号小于M的最大编号的提案。</p>
+<p>如果proposer收到超过半数的acceptor的响应，那么它就可以生成编号为M,value为V的提案[M，V]。这里的V是所有响应的acceptor中编号最大的提案的value。如果所有响应中没有提案，则V就由proposer自己选择。</p>
+<p>生成提案后，proposer将该提案发送给半数以上的Acceptor集合，并期望这些Acceptor能接受该提案。</p>
+<p>但是：</p>
+<p>如果有两个proposer,p1发出提案[M1,V1]，learn的结果是收到半数acceptor响应，acceptor承诺不接收小于M1的提案。此时p2提出提案[M2，V2],learn的结果是收到半数acceptor响应并承诺不接收小于M2的提案（M2&gt;M1），接着p1因为收到半数acceptor的响应，故将提案提出，但是因为acceptor后来接受过M2，所以会忽略p1的提案，此时p1又会生成提案M3(M3&gt;M2)，这样p2的提案又会被忽略，如此循环，就会没有提案被接受</p>
+<h5 id="阶段4"><a href="#阶段4" class="headerlink" title="阶段4"></a>阶段4</h5><p>通过选取一个主proposer，只有主proposer才能提出提案。那其实在主proposer任职期间也就不需要learn了。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 算法 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 算法，分布式，Paxos </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[MySQL事务之隔离级别详解]]></title>
       <url>/2018/03/21/MySQL%E4%BA%8B%E5%8A%A1%E4%B9%8B%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E8%AF%A6%E8%A7%A3/</url>
       <content type="html"><![CDATA[<h2 id="事务的四大特性"><a href="#事务的四大特性" class="headerlink" title="事务的四大特性"></a>事务的四大特性</h2><p>1.原子性</p>
@@ -1166,6 +1215,34 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
+      <title><![CDATA[JVM内存模型]]></title>
+      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
+      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+<a id="more"></a>
+<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
+<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
+<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
+<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
+<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
+<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
+]]></content>
+      
+        <categories>
+            
+            <category> JVM </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> JVM </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[jstack及dump文件分析]]></title>
       <url>/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>jstack命令的用法为jstack pid</p>
@@ -1290,28 +1367,66 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[JVM内存模型]]></title>
-      <url>/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</url>
-      <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
-<a id="more"></a>
-<p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p>
-<h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p>
-<p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
-<p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p>
-<h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p>
-<h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
+</code></pre><a id="more"></a>
+<pre><code>        return true;
+
+    }
+
+    if (anObject instanceof String) {
+
+        String anotherString = (String) anObject;
+
+        int n = value.length;
+
+        if (n == anotherString.value.length) {
+
+            char v1[] = value;
+
+            char v2[] = anotherString.value;
+
+            int i = 0;
+
+            while (n-- != 0) {
+
+                if (v1[i] != v2[i])
+
+                        return false;
+
+                i++;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+`}`
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
 ]]></content>
       
         <categories>
             
-            <category> JVM </category>
+            <category> 源码 </category>
             
         </categories>
         
         
         <tags>
             
-            <tag> JVM </tag>
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
             
         </tags>
         
@@ -1634,52 +1749,289 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
     </entry>
     
     <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
+      <title><![CDATA[hashMap源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
 </code></pre><a id="more"></a>
-<pre><code>        return true;
+<pre><code>        inflateTable(threshold);
 
     }
 
-    if (anObject instanceof String) {
+    if (key == null)
 
-        String anotherString = (String) anObject;
+        return putForNullKey(value);
 
-        int n = value.length;
+    int hash = hash(key);
 
-        if (n == anotherString.value.length) {
+    int i = indexFor(hash, table.length);
 
-            char v1[] = value;
+    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
 
-            char v2[] = anotherString.value;
+        Object k;
 
-            int i = 0;
+        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
 
-            while (n-- != 0) {
+            V oldValue = e.value;
 
-                if (v1[i] != v2[i])
+            e.value = value;
 
-                        return false;
+            e.recordAccess(this);
 
-                i++;
-
-            }
-
-            return true;
+            return oldValue;
 
         }
 
     }
 
-    return false;
+    modCount++;
+
+    addEntry(hash, key, value, i);
+
+    return null;
 
 `}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
+</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
+<pre><code>`final int hash(Object k) {`
+
+    int h = hashSeed;
+
+    if (0 != h &amp;&amp; k instanceof String) {
+
+        return sun.misc.Hashing.stringHash32((String) k);
+
+    }
+
+    h ^= k.hashCode();
+
+    // This function ensures that hashCodes that differ only by
+
+    // constant multiples at each bit position have a bounded
+
+    // number of collisions (approximately 8 at default load factor).
+
+    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
+
+    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+
+`}`
+</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
+<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
+
+    int newCapacity = newTable.length;
+
+    for (Entry&lt;K,V&gt; e : table) {
+
+        while(null != e) {
+
+            Entry&lt;K,V&gt; next = e.next;
+
+            if (rehash) {
+
+                e.hash = null == e.key ? 0 : hash(e.key);
+
+            }
+
+            int i = indexFor(e.hash, newCapacity);
+
+            e.next = newTable[i];
+
+            newTable[i] = e;
+
+            e = next;
+
+        }
+
+    }
+
+`}`
+</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
+<p>以上中的Entry的结构是：</p>
+<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
+<pre><code>final K key;
+
+V value;
+
+Entry&lt;K,V&gt; next;
+
+int hash;
+</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
+<pre><code>    value = v;
+
+    next = n;
+
+    key = k;
+
+    hash = h;
+
+}
+</code></pre><p><code>}</code></p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 源码 </tag>
+            
+            <tag> hashMap </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[ArrayList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
+</code></pre><a id="more"></a>
+<pre><code>     return true;
+
+}
+</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
+<p>其中的ensureCapacityInternal函数的源码为：</p>
+<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
+<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+
+     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+
+}
+
+ensureExplicitCapacity(minCapacity);
+</code></pre><p><code>}</code></p>
+<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
+<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+
+     modCount++;
+
+     if(minCapacity - elementData.length&gt;0){
+
+          grow(minCapacity);
+
+     }
+
+}
+</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
+<p>grow()的源码为：</p>
+<p><code>private void grow(int minCapacity){</code></p>
+<pre><code>int oldCapacity = elementData.length;
+
+int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+
+if(newCapacity - minCapacity&lt;0)
+
+     newCapacity=minCapacity;
+
+if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+
+     newCapacity = hugeCapacity(minCapacity);
+
+ elementData = Arrays.copyof(element,newCapacity);
+</code></pre><p><code>}</code></p>
+<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
+<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
+<p><code>public E remove(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+modCount++;
+
+E oldValue=elementData(index);
+
+int numMoved = size -index -1;
+
+if(numMoved&gt;0){
+
+     System.arraycopy(elementData,index+1,elementData,index,numMoved);
+
+}
+
+elementData[--size]=null;
+
+return oldValue;
+</code></pre><p> <code>}</code></p>
+<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
+<p>我们再看get的源码:</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+return ArrayList.this.elementData(offset+index);
+</code></pre><p><code>}</code></p>
+<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
+<p><code>public E set(int index,E e){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+E oldValue = Array.this.elementData(offset + index);
+
+ArrayList.this.elementData[offset +index]=e;
+
+return oldValue;
+</code></pre><p><code>}</code></p>
+<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
+<p>contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)&gt;=0;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>if(o==null){
+
+     for(int i=0;i&lt;size;i++){
+
+          if(elementData[i]==null)
+
+               return i;
+
+     }
+
+}else {
+
+     for(int i=0;i&lt;size;i++){
+
+          if(o.equals(elementData[i))
+
+               return i;
+
+     }
+
+}
+
+return -1;
+</code></pre><p><code>}</code></p>
+<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
+<p>还有clone的源码：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>try{
+
+     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
+
+     v.elementData = Arrays.copyof(elementData,size);
+
+     v.modCount = 0;
+
+}catch(CloneNotSupportedException e){
+
+     throw new InternalError();
+
+}
+</code></pre><p><code>}</code></p>
+<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
 ]]></content>
       
         <categories>
@@ -1923,309 +2275,6 @@ return clone;
             <tag> java </tag>
             
             <tag> 源码 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[ArrayList源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
-<p><code>ArrayList 的add源码为：</code></p>
-<pre><code>public boolean add(E e){
-
-     ensureCapacityInternal(size +1);
-
-     elementData[size++]==e;
-</code></pre><a id="more"></a>
-<pre><code>     return true;
-
-}
-</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
-<p>其中的ensureCapacityInternal函数的源码为：</p>
-<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
-<pre><code>if(elementData == EMPTY_ELEMENTDATA){
-
-     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
-
-}
-
-ensureExplicitCapacity(minCapacity);
-</code></pre><p><code>}</code></p>
-<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
-<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
-
-     modCount++;
-
-     if(minCapacity - elementData.length&gt;0){
-
-          grow(minCapacity);
-
-     }
-
-}
-</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
-<p>grow()的源码为：</p>
-<p><code>private void grow(int minCapacity){</code></p>
-<pre><code>int oldCapacity = elementData.length;
-
-int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
-
-if(newCapacity - minCapacity&lt;0)
-
-     newCapacity=minCapacity;
-
-if(newCapacity-MAX_ARRAY_SIZE&gt;0)
-
-     newCapacity = hugeCapacity(minCapacity);
-
- elementData = Arrays.copyof(element,newCapacity);
-</code></pre><p><code>}</code></p>
-<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
-<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
-<p><code>public E remove(int index){</code></p>
-<pre><code>rangeCheck(index);
-
-modCount++;
-
-E oldValue=elementData(index);
-
-int numMoved = size -index -1;
-
-if(numMoved&gt;0){
-
-     System.arraycopy(elementData,index+1,elementData,index,numMoved);
-
-}
-
-elementData[--size]=null;
-
-return oldValue;
-</code></pre><p> <code>}</code></p>
-<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
-<p>我们再看get的源码:</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>rangeCheck(index);
-
-checkForComodification();
-
-return ArrayList.this.elementData(offset+index);
-</code></pre><p><code>}</code></p>
-<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
-<p><code>public E set(int index,E e){</code></p>
-<pre><code>rangeCheck(index);
-
-checkForComodification();
-
-E oldValue = Array.this.elementData(offset + index);
-
-ArrayList.this.elementData[offset +index]=e;
-
-return oldValue;
-</code></pre><p><code>}</code></p>
-<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
-<p>contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)&gt;=0;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>if(o==null){
-
-     for(int i=0;i&lt;size;i++){
-
-          if(elementData[i]==null)
-
-               return i;
-
-     }
-
-}else {
-
-     for(int i=0;i&lt;size;i++){
-
-          if(o.equals(elementData[i))
-
-               return i;
-
-     }
-
-}
-
-return -1;
-</code></pre><p><code>}</code></p>
-<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
-<p>还有clone的源码：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>try{
-
-     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
-
-     v.elementData = Arrays.copyof(elementData,size);
-
-     v.modCount = 0;
-
-}catch(CloneNotSupportedException e){
-
-     throw new InternalError();
-
-}
-</code></pre><p><code>}</code></p>
-<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[hashMap源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
-<p>hashMap就是数组加链表的存储结构。</p>
-<p>put源码：</p>
-<p><code>public V put(K key, V value) {</code></p>
-<pre><code>if (table == EMPTY_TABLE) {
-</code></pre><a id="more"></a>
-<pre><code>        inflateTable(threshold);
-
-    }
-
-    if (key == null)
-
-        return putForNullKey(value);
-
-    int hash = hash(key);
-
-    int i = indexFor(hash, table.length);
-
-    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
-
-        Object k;
-
-        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
-
-            V oldValue = e.value;
-
-            e.value = value;
-
-            e.recordAccess(this);
-
-            return oldValue;
-
-        }
-
-    }
-
-    modCount++;
-
-    addEntry(hash, key, value, i);
-
-    return null;
-
-`}`
-</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
-<pre><code>`final int hash(Object k) {`
-
-    int h = hashSeed;
-
-    if (0 != h &amp;&amp; k instanceof String) {
-
-        return sun.misc.Hashing.stringHash32((String) k);
-
-    }
-
-    h ^= k.hashCode();
-
-    // This function ensures that hashCodes that differ only by
-
-    // constant multiples at each bit position have a bounded
-
-    // number of collisions (approximately 8 at default load factor).
-
-    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
-
-    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
-
-`}`
-</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
-<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
-
-    int newCapacity = newTable.length;
-
-    for (Entry&lt;K,V&gt; e : table) {
-
-        while(null != e) {
-
-            Entry&lt;K,V&gt; next = e.next;
-
-            if (rehash) {
-
-                e.hash = null == e.key ? 0 : hash(e.key);
-
-            }
-
-            int i = indexFor(e.hash, newCapacity);
-
-            e.next = newTable[i];
-
-            newTable[i] = e;
-
-            e = next;
-
-        }
-
-    }
-
-`}`
-</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
-<p>以上中的Entry的结构是：</p>
-<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
-<pre><code>final K key;
-
-V value;
-
-Entry&lt;K,V&gt; next;
-
-int hash;
-</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
-<pre><code>    value = v;
-
-    next = n;
-
-    key = k;
-
-    hash = h;
-
-}
-</code></pre><p><code>}</code></p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 源码 </tag>
-            
-            <tag> hashMap </tag>
             
         </tags>
         
