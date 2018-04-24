@@ -3,6 +3,50 @@
   
     
     <entry>
+      <title><![CDATA[MySQL InnoDB 存储引擎]]></title>
+      <url>/2018/04/17/MySQL-InnoDB-%E6%9D%82%E8%AE%BA/</url>
+      <content type="html"><![CDATA[<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。</p>
+<h2 id="MySQL架构图"><a href="#MySQL架构图" class="headerlink" title="MySQL架构图"></a>MySQL架构图</h2><p> <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-13 上午11.16.14.png" alt="屏幕快照 2018-04-13 上午11.16.14"></p>
+<a id="more"></a>
+<h2 id="InnoDB的存储引擎"><a href="#InnoDB的存储引擎" class="headerlink" title="InnoDB的存储引擎"></a>InnoDB的存储引擎</h2><h4 id="体系结构"><a href="#体系结构" class="headerlink" title="体系结构"></a>体系结构</h4><p><img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-18 上午11.15.35.png" alt="屏幕快照 2018-04-18 上午11.15.35"></p>
+<h5 id="后台线程"><a href="#后台线程" class="headerlink" title="后台线程"></a>后台线程</h5><p>默认情况，InnoDB有7个后台线程：4个IO线程，1个master 线程，1个锁监控线程，1个错误监控线程。</p>
+<p>4个IO线程分别是insert buffer thread、log thread、read thread、write thread。</p>
+<p>master thread的线程优先级别最高。其内部由几个循环组成：主循环（loop）、后台循环（background loop）、刷新循环（flush loop）、暂停循环（suspend loop）。master thread 会根据数据库运行的状态在loop、background loop、flush loop、suspend loop中进行切换。在loop循环中会有以下操作：日志缓冲刷新到磁盘；合并插入缓存；刷新缓冲池的脏页到磁盘；删除无用的undo页；产生一个check point。当没有用户活动或者数据库关闭之后会切换到background loop，在该循环中会有以下操作：删除无用的undo页；合并20个插入缓存；跳回主循环；不断刷新100个页（该操作有可能调到flush loop中完成），当数据库无任务时，会切换到suspend loop将master thread挂起。</p>
+<h5 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h5><p>结构图： <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-19 下午3.00.50.png" alt="屏幕快照 2018-04-19 下午3.00.50"></p>
+<p>缓冲池是占最大块内存的部分，用来存放各种数据的缓存。因为InnoDB的存储引擎的工作方式总是将数据库文件按页（每页16k）读取到缓冲池，然后按最近最少使用的LRU算法来保留在缓冲池中的缓冲数据。如果数据库文件需要修改，总是首先修改在缓存池中的页（发生修改后，该页即为脏页），然后按照一定的频率将缓冲池的脏页刷新到文件。</p>
+<p>缓冲池中缓存的数据页类型有：索引页、数据页、undo页、插入缓冲（insert buffer）、自适应哈希索引（adaptive hash index）、InnoDB存储的锁信息（lock info）、数据字典信息（data dictionary）等。</p>
+<p>日志缓冲将重做日志信息先放入这个缓冲区，然后按一定频率将其刷新到重做日志文件。该值一般不需要设置很大，因为一般情况下每一秒钟就会将重做日志缓冲刷新到日志文件，因此我们只需要保证每秒产生的事务量在这个缓冲大小之内即可。</p>
+<p>额外的内存池：在InnoDB存储引擎中，对内存的管理是通过一种称为内存堆的方式进行的。在对一些数据结构本身分配内存时，需要从额外的内存池中申请，当该区域的内存不够时，会从缓冲池中申请。InnoDB实例会申请缓冲池的空间，但是每个缓冲池中的帧缓冲还有对应的缓冲控制对象，而且这些对象记录了诸如LRU、锁、等待等方面的信息，而这个对象的内存需要从额外内存池中申请。因此，当你申请了很大的InnoDB缓冲池中，这个值也应该相应增加。</p>
+<h4 id="关键特性"><a href="#关键特性" class="headerlink" title="关键特性"></a>关键特性</h4><h5 id="插入缓冲"><a href="#插入缓冲" class="headerlink" title="插入缓冲"></a>插入缓冲</h5><p>对于非聚集索引的插入或更新操作，InnoDB不是每一次直接插入索引页中。而是先判断插入的非聚集索引页是否在缓冲池中。如果在，则直接插入；如果不存在，则先放入一个插入缓冲区中，好似欺骗数据库这个非聚集的索引已经插入到叶子结点了，然后再以一定的频率执行插入缓冲和非聚集索引页子节点的合并操作，这时通常能将多个插入合并到一个操作中（因为在一个索引页中），这就大大提高了对非聚集索引执行插入和修改操作的性能。</p>
+<p>​    插入缓冲的使用需要满足以下两个条件：</p>
+<p>​    索引是辅助索引。</p>
+<p>​    索引不是唯一的。</p>
+<p>索引是辅助索引：InnoDB存储引擎是基于索引的表，聚集索引（主键）既存储了索引值也存储了行值，且聚集索引一般是有顺序的，所以直接插入不会有大的IO操作</p>
+<p>索引不是唯一的：如果索引是唯一，假设允许使用插入缓存，为了其保持唯一性，就得查询真正的索引页来判断是否是真正的唯一，这种查找是离散的，所以还是会有大的IO操作，那么使用插入缓存就得不偿失了。</p>
+<p>在InnoDB 5.5版本，insert buffer还新增了Update、Delete、Purge等操作，insert buffer随之更名为change buffer。</p>
+<h5 id="两次写"><a href="#两次写" class="headerlink" title="两次写"></a>两次写</h5><p>InnoDB存储引擎doublewrite的体系架构图如下： <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-24 下午5.28.19.png" alt="屏幕快照 2018-04-24 下午5.28.19"></p>
+<p>当写入失效发生时，先通过页的副本来还原该页，再进行重做，这就是doublewrite。doublewrite由两个部分组成：一部分是内存中的doublewrite buffer，大小为2MB;另一部分是物理磁盘上共享表空间中连续的128个页，即两个区，大小同样为2MB。当缓冲池的脏页刷新时，并不直接写磁盘，而是会通过memcpy函数将脏页先拷贝到内存中的doublewrite buffer，之后通过doublewrite buffer再分两次，每次写入1MB到共享表空间的物理磁盘上，然后马上调用fsync函数，同步磁盘，避免缓冲写带来的问题。这个过程中，因为doublewrite页是连续的，因此这个过程是顺序写的，开销并不是很大。在完成doublewrite 页的写入后，再将doublewrite buffer中的页写入各个表空间文件中，此时的写入则是离散的。</p>
+<h5 id="自适应哈希索引"><a href="#自适应哈希索引" class="headerlink" title="自适应哈希索引"></a>自适应哈希索引</h5><p>InnoDB存储引擎会监控对表上索引的查找，如果观察到建立哈希索引可以带来速度的提升，则建立哈希索引，所以称之为自适应的。自适应哈希索引通过缓冲池的B+树构造而来，因此建立的速度很快。而且不需要讲整个表都建哈希索引，InnoDB存储引擎会自动根据访问的频率和模式来为某些页建立哈希索引。值得注意的是，哈希索引只能用来搜索等值的查询。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> MySQL </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> MySQL </tag>
+            
+            <tag> InnoDB </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[Paxos算法分析]]></title>
       <url>/2018/04/12/Paxos%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>Paxos算法是基于消息传递且具有高度容错特性的一致性算法。</p>
@@ -1912,146 +1956,6 @@ return -1;
     </entry>
     
     <entry>
-      <title><![CDATA[hashMap源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
-<p>hashMap就是数组加链表的存储结构。</p>
-<p>put源码：</p>
-<p><code>public V put(K key, V value) {</code></p>
-<pre><code>if (table == EMPTY_TABLE) {
-</code></pre><a id="more"></a>
-<pre><code>        inflateTable(threshold);
-
-    }
-
-    if (key == null)
-
-        return putForNullKey(value);
-
-    int hash = hash(key);
-
-    int i = indexFor(hash, table.length);
-
-    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
-
-        Object k;
-
-        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
-
-            V oldValue = e.value;
-
-            e.value = value;
-
-            e.recordAccess(this);
-
-            return oldValue;
-
-        }
-
-    }
-
-    modCount++;
-
-    addEntry(hash, key, value, i);
-
-    return null;
-
-`}`
-</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
-<pre><code>`final int hash(Object k) {`
-
-    int h = hashSeed;
-
-    if (0 != h &amp;&amp; k instanceof String) {
-
-        return sun.misc.Hashing.stringHash32((String) k);
-
-    }
-
-    h ^= k.hashCode();
-
-    // This function ensures that hashCodes that differ only by
-
-    // constant multiples at each bit position have a bounded
-
-    // number of collisions (approximately 8 at default load factor).
-
-    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
-
-    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
-
-`}`
-</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
-<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
-
-    int newCapacity = newTable.length;
-
-    for (Entry&lt;K,V&gt; e : table) {
-
-        while(null != e) {
-
-            Entry&lt;K,V&gt; next = e.next;
-
-            if (rehash) {
-
-                e.hash = null == e.key ? 0 : hash(e.key);
-
-            }
-
-            int i = indexFor(e.hash, newCapacity);
-
-            e.next = newTable[i];
-
-            newTable[i] = e;
-
-            e = next;
-
-        }
-
-    }
-
-`}`
-</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
-<p>以上中的Entry的结构是：</p>
-<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
-<pre><code>final K key;
-
-V value;
-
-Entry&lt;K,V&gt; next;
-
-int hash;
-</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
-<pre><code>    value = v;
-
-    next = n;
-
-    key = k;
-
-    hash = h;
-
-}
-</code></pre><p><code>}</code></p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 源码 </tag>
-            
-            <tag> hashMap </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[LinkedList源码分析]]></title>
       <url>/2017/11/30/2017-11-30--LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>LinkedList的基本存储结构是链表</p>
@@ -2275,6 +2179,146 @@ return clone;
             <tag> java </tag>
             
             <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[hashMap源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
+</code></pre><a id="more"></a>
+<pre><code>        inflateTable(threshold);
+
+    }
+
+    if (key == null)
+
+        return putForNullKey(value);
+
+    int hash = hash(key);
+
+    int i = indexFor(hash, table.length);
+
+    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
+
+        Object k;
+
+        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
+
+            V oldValue = e.value;
+
+            e.value = value;
+
+            e.recordAccess(this);
+
+            return oldValue;
+
+        }
+
+    }
+
+    modCount++;
+
+    addEntry(hash, key, value, i);
+
+    return null;
+
+`}`
+</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
+<pre><code>`final int hash(Object k) {`
+
+    int h = hashSeed;
+
+    if (0 != h &amp;&amp; k instanceof String) {
+
+        return sun.misc.Hashing.stringHash32((String) k);
+
+    }
+
+    h ^= k.hashCode();
+
+    // This function ensures that hashCodes that differ only by
+
+    // constant multiples at each bit position have a bounded
+
+    // number of collisions (approximately 8 at default load factor).
+
+    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
+
+    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+
+`}`
+</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
+<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
+
+    int newCapacity = newTable.length;
+
+    for (Entry&lt;K,V&gt; e : table) {
+
+        while(null != e) {
+
+            Entry&lt;K,V&gt; next = e.next;
+
+            if (rehash) {
+
+                e.hash = null == e.key ? 0 : hash(e.key);
+
+            }
+
+            int i = indexFor(e.hash, newCapacity);
+
+            e.next = newTable[i];
+
+            newTable[i] = e;
+
+            e = next;
+
+        }
+
+    }
+
+`}`
+</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
+<p>以上中的Entry的结构是：</p>
+<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
+<pre><code>final K key;
+
+V value;
+
+Entry&lt;K,V&gt; next;
+
+int hash;
+</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
+<pre><code>    value = v;
+
+    next = n;
+
+    key = k;
+
+    hash = h;
+
+}
+</code></pre><p><code>}</code></p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 源码 </tag>
+            
+            <tag> hashMap </tag>
             
         </tags>
         

@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-04-12T09:43:29.000Z</updated>
+  <updated>2018-04-24T09:50:39.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>MySQL InnoDB 存储引擎</title>
+    <link href="http://yoursite.com/2018/04/17/MySQL-InnoDB-%E6%9D%82%E8%AE%BA/"/>
+    <id>http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/</id>
+    <published>2018-04-17T09:05:11.000Z</published>
+    <updated>2018-04-24T09:50:39.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。</p><h2 id="MySQL架构图"><a href="#MySQL架构图" class="headerlink" title="MySQL架构图"></a>MySQL架构图</h2><p> <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-13 上午11.16.14.png" alt="屏幕快照 2018-04-13 上午11.16.14"></p><a id="more"></a><h2 id="InnoDB的存储引擎"><a href="#InnoDB的存储引擎" class="headerlink" title="InnoDB的存储引擎"></a>InnoDB的存储引擎</h2><h4 id="体系结构"><a href="#体系结构" class="headerlink" title="体系结构"></a>体系结构</h4><p><img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-18 上午11.15.35.png" alt="屏幕快照 2018-04-18 上午11.15.35"></p><h5 id="后台线程"><a href="#后台线程" class="headerlink" title="后台线程"></a>后台线程</h5><p>默认情况，InnoDB有7个后台线程：4个IO线程，1个master 线程，1个锁监控线程，1个错误监控线程。</p><p>4个IO线程分别是insert buffer thread、log thread、read thread、write thread。</p><p>master thread的线程优先级别最高。其内部由几个循环组成：主循环（loop）、后台循环（background loop）、刷新循环（flush loop）、暂停循环（suspend loop）。master thread 会根据数据库运行的状态在loop、background loop、flush loop、suspend loop中进行切换。在loop循环中会有以下操作：日志缓冲刷新到磁盘；合并插入缓存；刷新缓冲池的脏页到磁盘；删除无用的undo页；产生一个check point。当没有用户活动或者数据库关闭之后会切换到background loop，在该循环中会有以下操作：删除无用的undo页；合并20个插入缓存；跳回主循环；不断刷新100个页（该操作有可能调到flush loop中完成），当数据库无任务时，会切换到suspend loop将master thread挂起。</p><h5 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h5><p>结构图： <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-19 下午3.00.50.png" alt="屏幕快照 2018-04-19 下午3.00.50"></p><p>缓冲池是占最大块内存的部分，用来存放各种数据的缓存。因为InnoDB的存储引擎的工作方式总是将数据库文件按页（每页16k）读取到缓冲池，然后按最近最少使用的LRU算法来保留在缓冲池中的缓冲数据。如果数据库文件需要修改，总是首先修改在缓存池中的页（发生修改后，该页即为脏页），然后按照一定的频率将缓冲池的脏页刷新到文件。</p><p>缓冲池中缓存的数据页类型有：索引页、数据页、undo页、插入缓冲（insert buffer）、自适应哈希索引（adaptive hash index）、InnoDB存储的锁信息（lock info）、数据字典信息（data dictionary）等。</p><p>日志缓冲将重做日志信息先放入这个缓冲区，然后按一定频率将其刷新到重做日志文件。该值一般不需要设置很大，因为一般情况下每一秒钟就会将重做日志缓冲刷新到日志文件，因此我们只需要保证每秒产生的事务量在这个缓冲大小之内即可。</p><p>额外的内存池：在InnoDB存储引擎中，对内存的管理是通过一种称为内存堆的方式进行的。在对一些数据结构本身分配内存时，需要从额外的内存池中申请，当该区域的内存不够时，会从缓冲池中申请。InnoDB实例会申请缓冲池的空间，但是每个缓冲池中的帧缓冲还有对应的缓冲控制对象，而且这些对象记录了诸如LRU、锁、等待等方面的信息，而这个对象的内存需要从额外内存池中申请。因此，当你申请了很大的InnoDB缓冲池中，这个值也应该相应增加。</p><h4 id="关键特性"><a href="#关键特性" class="headerlink" title="关键特性"></a>关键特性</h4><h5 id="插入缓冲"><a href="#插入缓冲" class="headerlink" title="插入缓冲"></a>插入缓冲</h5><p>对于非聚集索引的插入或更新操作，InnoDB不是每一次直接插入索引页中。而是先判断插入的非聚集索引页是否在缓冲池中。如果在，则直接插入；如果不存在，则先放入一个插入缓冲区中，好似欺骗数据库这个非聚集的索引已经插入到叶子结点了，然后再以一定的频率执行插入缓冲和非聚集索引页子节点的合并操作，这时通常能将多个插入合并到一个操作中（因为在一个索引页中），这就大大提高了对非聚集索引执行插入和修改操作的性能。</p><p>​    插入缓冲的使用需要满足以下两个条件：</p><p>​    索引是辅助索引。</p><p>​    索引不是唯一的。</p><p>索引是辅助索引：InnoDB存储引擎是基于索引的表，聚集索引（主键）既存储了索引值也存储了行值，且聚集索引一般是有顺序的，所以直接插入不会有大的IO操作</p><p>索引不是唯一的：如果索引是唯一，假设允许使用插入缓存，为了其保持唯一性，就得查询真正的索引页来判断是否是真正的唯一，这种查找是离散的，所以还是会有大的IO操作，那么使用插入缓存就得不偿失了。</p><p>在InnoDB 5.5版本，insert buffer还新增了Update、Delete、Purge等操作，insert buffer随之更名为change buffer。</p><h5 id="两次写"><a href="#两次写" class="headerlink" title="两次写"></a>两次写</h5><p>InnoDB存储引擎doublewrite的体系架构图如下： <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-24 下午5.28.19.png" alt="屏幕快照 2018-04-24 下午5.28.19"></p><p>当写入失效发生时，先通过页的副本来还原该页，再进行重做，这就是doublewrite。doublewrite由两个部分组成：一部分是内存中的doublewrite buffer，大小为2MB;另一部分是物理磁盘上共享表空间中连续的128个页，即两个区，大小同样为2MB。当缓冲池的脏页刷新时，并不直接写磁盘，而是会通过memcpy函数将脏页先拷贝到内存中的doublewrite buffer，之后通过doublewrite buffer再分两次，每次写入1MB到共享表空间的物理磁盘上，然后马上调用fsync函数，同步磁盘，避免缓冲写带来的问题。这个过程中，因为doublewrite页是连续的，因此这个过程是顺序写的，开销并不是很大。在完成doublewrite 页的写入后，再将doublewrite buffer中的页写入各个表空间文件中，此时的写入则是离散的。</p><h5 id="自适应哈希索引"><a href="#自适应哈希索引" class="headerlink" title="自适应哈希索引"></a>自适应哈希索引</h5><p>InnoDB存储引擎会监控对表上索引的查找，如果观察到建立哈希索引可以带来速度的提升，则建立哈希索引，所以称之为自适应的。自适应哈希索引通过缓冲池的B+树构造而来，因此建立的速度很快。而且不需要讲整个表都建哈希索引，InnoDB存储引擎会自动根据访问的频率和模式来为某些页建立哈希索引。值得注意的是，哈希索引只能用来搜索等值的查询。</p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;写在前面&quot;&gt;&lt;a href=&quot;#写在前面&quot; class=&quot;headerlink&quot; title=&quot;写在前面&quot;&gt;&lt;/a&gt;写在前面&lt;/h2&gt;&lt;p&gt;这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。&lt;/p&gt;
+&lt;h2 id=&quot;MySQL架构图&quot;&gt;&lt;a href=&quot;#MySQL架构图&quot; class=&quot;headerlink&quot; title=&quot;MySQL架构图&quot;&gt;&lt;/a&gt;MySQL架构图&lt;/h2&gt;&lt;p&gt; &lt;img src=&quot;/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-13 上午11.16.14.png&quot; alt=&quot;屏幕快照 2018-04-13 上午11.16.14&quot;&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="MySQL" scheme="http://yoursite.com/categories/MySQL/"/>
+    
+    
+      <category term="MySQL" scheme="http://yoursite.com/tags/MySQL/"/>
+    
+      <category term="InnoDB" scheme="http://yoursite.com/tags/InnoDB/"/>
+    
+  </entry>
   
   <entry>
     <title>Paxos算法分析</title>
@@ -495,33 +520,6 @@
     
     
       <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>jstack及dump文件分析</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--jstack%E5%8F%8Adump%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--jstack及dump文件分析/</id>
-    <published>2017-11-30T03:50:00.000Z</published>
-    <updated>2017-11-30T03:57:58.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>jstack命令的用法为jstack pid</p><p>jstack在jdk/bin的目录下</p><p>在实际运行中，建议产生3次以上的dump文件，每次间隔10s左右，文件一起分析来能定位问题，不要拿一次的dump文件来分析问题，没有什么参考性。</p><p>dump文件中的线程状态值有：</p><a id="more"></a><p>1.死锁，Deadlock</p><p>2.执行中，Runnable</p><p>3.等待资源，Waiting on condition</p><p>4.等待获取监视器，Waiting on monitor entry</p><p>5.暂停，Suspended</p><p>6.对象等待中，Object.wait()或TIMED_WAITING</p><p>7.阻塞，Blocked</p><p>8.停止，Parked</p><p>含义分析如下：</p><p>1.Deadlock:死锁线程，一般指多个线程调用间，进入相互资源占用，导致一直等待无法释放的情况。</p><p>2.Runable:一般指该线程正在执行状态中，该线程占用了资源，正在处理某个请求，有可能正在传递SQL到数据库执行，有可能在对某个文件进行操作，有可能进行数据类型转换。</p><p>3.Waiting on condition:等待资源，或等待某个条件的发生。具体原因需结合stacktrace来分析。</p><pre><code>如果堆栈信息明确是应用代码，则证明该线程正在等待资源。一般是大量读取某资源，且该资源采用了资源锁的情况下，线程进入了等待状态，等待资源的读取。或正在等待其他现场的执行如果发现有大量的线程都处在Wait on Condition，从线程的stack看，正等待网络读写，这可能是一个网络瓶颈的征兆，是因为网络阻塞导致线程无法执行，一种情况是网络非常忙，几乎消耗了所有带宽，仍然有大量的数据等待网络读写；另一种情况也可能是网络空闲，但由于路由等问题，导致包无法正常的到达。又或者是该线程在sleep,等待sleep的时间到了，将被唤醒</code></pre><p>4.Blocked：线程阻塞，是指当前线程执行过程中，所需要的资源长时间等待却一直未能获取到，被容器的线程管理器表示为阻塞状态，可以理解为等待资源超时的线程。</p><p>5.Waiting for monitor entry 和 in Object.wait(): monitor是java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者Class的锁。每一个对象都有且只有一个monitor。当某个线程期待获得Monitor及对象的锁，而在锁被其他线程拥有的时候，这个线程就会进入Entry Set区域。曾经获得过锁，但是其他必要条件不满足而需要wait的线程就进入了Wait Set区域。</p><p>举例分析：</p><p>Waiting to lock 和 Blocked</p><p>实例：</p><p>“RMI TCP Connection(267865)-172.16.5.25” daemon prio=10 tid=0x00007fd508371000 nid=0x55ae  waiting for monitor entry [0x00007fd4f8684000]</p><p>   java.lang.Thread.State:  BLOCKED (on object monitor)</p><p>at org.apache.log4j.Category.callAppenders(Category.java:201)</p><ul><li>waiting to lock <0x00000000acf4d0c0> (a org.apache.log4j.Logger)</0x00000000acf4d0c0></li></ul><p>at org.apache.log4j.Category.forcedLog(Category.java:388)</p><p>at org.apache.log4j.Category.log(Category.java:853)</p><p>at org.apache.commons.logging.impl.Log4JLogger.warn(Log4JLogger.java:234)</p><p>at com.tuan.core.common.lang.cache.remote.SpyMemcachedClient.get(SpyMemcachedClient.java:110)</p><p>分析：</p><p>1）线程状态时Blocked，即阻塞状态。说明线程等待资源超时！</p><p>2）“waiting to lock<0x00000000acf4d0c0>”指的是线程在等待给这个0x00000000acf40c0地址上锁。</0x00000000acf4d0c0></p><p>3）如果在dump日志里查找字符串0x00000000acf40c0,发现有大量的线程在等待给这个地址上锁。如果能找到dump日志里哪个线程获得了这个锁，然后在我们自己打印的log中查到该线程，就能定位到具体位置。</p><p>4）”waiting for monitor entry”说明此线程通过synchronized(obj){……}申请进入临界区，进入到了Entry Set队列，但该obj对应的monitor被其他线程拥有，所以本线程在Entry Set中等待。</p><p>5）第一行里，“RMI TCP Connection(267865)-172.16.5.25”是Thread Name。tid 指java Thread id。nid 指native线程的id。prio是线程的优先级。[0x00007fd4f8684000]是线程栈起始地址。</p><p>示例二：Waiting on condition 和 TIME_WAITING</p><p>示例：</p><p>“RMI TCP Connection(idle)” daemon prio=10 tid=0x00007fd50834e800 nid=0x56b2  waiting on condition [0x00007fd4f1a59000]</p><p>   java.lang.Thread.State:  TIMED_WAITING (parking)</p><p>at sun.misc.Unsafe.park(Native Method)</p><ul><li>parking to wait for  <0x00000000acd84de8> (a java.util.concurrent.SynchronousQueue$TransferStack)</0x00000000acd84de8></li></ul><p>at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:198)</p><p>at java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue.java:424)</p><p>at java.util.concurrent.SynchronousQueue$TransferStack.transfer(SynchronousQueue.java:323)</p><p>at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:874)</p><p>at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:945)</p><p>at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:907)</p><p>at java.lang.Thread.run(Thread.java:662)</p><p>1)“TIME_WAITING(parking)”中的time_waiting指等待状态，但这里指定了时间，到达指定时间后自动退出等待状态；parking指线程处于挂起中。</p><p>2）“waiing on condition”需要与堆栈中的“parking to wait for <0x00000000acd84de8>(a java.util.concurrent.SynchronousQueue$TransferStack) ”结合来看。首先，本线程肯定是在等待某个条件的发生，来把自己唤醒。其次，SynchronousQueue并不是一个队列，只是线程之间移交信息的机制，当我们把一个元素放入到SynchronousQueue中时必须有另一个线程正在等待接收移交的任务，因此这就是本线程在等待的条件。</0x00000000acd84de8></p><p>示例三：in Object.wait() 和 TIMED_WAITING</p><p>示例如下：</p><p>“RMI RenewClean-[172.16.5.19:28475]” daemon prio=10 tid=0x0000000041428800 nid=0xb09  in Object.wait() [0x00007f34f4bd0000]</p><p>   java.lang.Thread.State:  TIMED_WAITING (on object monitor)</p><p>at java.lang.Object.wait(Native Method)</p><ul><li>waiting on <0x00000000aa672478> (a java.lang.ref.ReferenceQueue$Lock)</0x00000000aa672478></li></ul><p>at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:118)</p><ul><li>locked <0x00000000aa672478> (a java.lang.ref.ReferenceQueue$Lock)</0x00000000aa672478></li></ul><p>at sun.rmi.transport.DGCClient$EndpointEntry$RenewCleanThread.run(DGCClient.java:516)</p><p>at java.lang.Thread.run(Thread.java:662)</p><p>1）“TIMED_WAITING(on object monitor)”,对于本例而言，是因为本线程调用了java.lang.Object.wait(long timeout)而进入等待状态。</p><p>2）“Wait Set”中等待的线程状态就是“in Object.wait()”。 当线程获得了Monitor，进入了临界区之后，如果发现线程继续运行的条件没有满足，他则调用对象（一般就是被synchronized的对象）的wait()方法，放弃了Monitor，进入Wait Set队列。只有当别的线程在该对象上调用了notify()或者notifyAll(),“Wait Set”队列中线程才得到机会去竞争，但是只有一个线程获得对象的Monitor，恢复到运行态。</p><p>3）RMI RenewClean是DGCClient的一部分。DGC指的是Distributed GC,即分布式垃圾回收。</p><p>4）请注意，是先locked<0x00000000aa672478>，后waiting on<0x00000000aa672478>，之所以先锁在等同一个对象，分析代码如下：</0x00000000aa672478></0x00000000aa672478></p><p>static private class  Lock { };</p><p>private Lock lock = new Lock();</p><p>public Reference&lt;? extends T&gt;  <a href="http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java" target="_blank" rel="noopener">remove</a>(long timeout)</p><p>{</p><pre><code>synchronized (lock) {    Reference&lt;? extends T&gt; r =  [reallyPoll](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java#ReferenceQueue.reallyPoll%28%29)();    if (r != null) return r;    for (;;) {         [lock](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java#ReferenceQueue.0lock). [wait](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/Object.java#Object.wait%28long%29)(timeout);        r =  [reallyPoll](http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/lang/ref/ReferenceQueue.java#ReferenceQueue.reallyPoll%28%29)();        ……   }</code></pre><p>}</p><p>即，线程的执行中，先用synchronized获得了这个对象的Monitor(对应于locked<0x00000000aa672478>)；当执行到lock.wait(timeout)，线程就放弃了Monitor的所有权，进入“Wait Set”队列</0x00000000aa672478></p><p>5）从堆栈信息看，是正在清理remote references to  remote objects,引用的租约到了，分布式垃圾回收在逐一清理呢。</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;jstack命令的用法为jstack pid&lt;/p&gt;
-&lt;p&gt;jstack在jdk/bin的目录下&lt;/p&gt;
-&lt;p&gt;在实际运行中，建议产生3次以上的dump文件，每次间隔10s左右，文件一起分析来能定位问题，不要拿一次的dump文件来分析问题，没有什么参考性。&lt;/p&gt;
-&lt;p&gt;dump文件中的线程状态值有：&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="调优" scheme="http://yoursite.com/categories/%E8%B0%83%E4%BC%98/"/>
-    
-    
-      <category term="调优" scheme="http://yoursite.com/tags/%E8%B0%83%E4%BC%98/"/>
-    
-      <category term="jstack" scheme="http://yoursite.com/tags/jstack/"/>
     
   </entry>
   

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/favicon.ico?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="MySQL,InnoDB," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="有态度" type="application/atom+xml" />
+
+
+
+
+
+
+<meta name="description" content="写在前面这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。 MySQL架构图">
+<meta name="keywords" content="MySQL,InnoDB">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL InnoDB 存储引擎">
+<meta property="og:url" content="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/index.html">
+<meta property="og:site_name" content="有态度">
+<meta property="og:description" content="写在前面这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。 MySQL架构图">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/屏幕快照%202018-04-13%20上午11.16.14.png">
+<meta property="og:image" content="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/屏幕快照%202018-04-18%20上午11.15.35.png">
+<meta property="og:image" content="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/屏幕快照%202018-04-19%20下午3.00.50.png">
+<meta property="og:image" content="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/屏幕快照%202018-04-24%20下午5.28.19.png">
+<meta property="og:updated_time" content="2018-04-24T09:50:39.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL InnoDB 存储引擎">
+<meta name="twitter:description" content="写在前面这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。 MySQL架构图">
+<meta name="twitter:image" content="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/屏幕快照%202018-04-13%20上午11.16.14.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/"/>
+
+
+
+
+
+  <title>MySQL InnoDB 存储引擎 | 有态度</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">有态度</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">阅读，学习，思考，写作，独立</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-bars"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/17/MySQL-InnoDB-杂论/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="刘凯召">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/headimg.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="有态度">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">MySQL InnoDB 存储引擎</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-17T17:05:11+08:00">
+                2018-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。</p>
+<h2 id="MySQL架构图"><a href="#MySQL架构图" class="headerlink" title="MySQL架构图"></a>MySQL架构图</h2><p> <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-13 上午11.16.14.png" alt="屏幕快照 2018-04-13 上午11.16.14"></p>
+<a id="more"></a>
+<h2 id="InnoDB的存储引擎"><a href="#InnoDB的存储引擎" class="headerlink" title="InnoDB的存储引擎"></a>InnoDB的存储引擎</h2><h4 id="体系结构"><a href="#体系结构" class="headerlink" title="体系结构"></a>体系结构</h4><p><img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-18 上午11.15.35.png" alt="屏幕快照 2018-04-18 上午11.15.35"></p>
+<h5 id="后台线程"><a href="#后台线程" class="headerlink" title="后台线程"></a>后台线程</h5><p>默认情况，InnoDB有7个后台线程：4个IO线程，1个master 线程，1个锁监控线程，1个错误监控线程。</p>
+<p>4个IO线程分别是insert buffer thread、log thread、read thread、write thread。</p>
+<p>master thread的线程优先级别最高。其内部由几个循环组成：主循环（loop）、后台循环（background loop）、刷新循环（flush loop）、暂停循环（suspend loop）。master thread 会根据数据库运行的状态在loop、background loop、flush loop、suspend loop中进行切换。在loop循环中会有以下操作：日志缓冲刷新到磁盘；合并插入缓存；刷新缓冲池的脏页到磁盘；删除无用的undo页；产生一个check point。当没有用户活动或者数据库关闭之后会切换到background loop，在该循环中会有以下操作：删除无用的undo页；合并20个插入缓存；跳回主循环；不断刷新100个页（该操作有可能调到flush loop中完成），当数据库无任务时，会切换到suspend loop将master thread挂起。</p>
+<h5 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h5><p>结构图： <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-19 下午3.00.50.png" alt="屏幕快照 2018-04-19 下午3.00.50"></p>
+<p>缓冲池是占最大块内存的部分，用来存放各种数据的缓存。因为InnoDB的存储引擎的工作方式总是将数据库文件按页（每页16k）读取到缓冲池，然后按最近最少使用的LRU算法来保留在缓冲池中的缓冲数据。如果数据库文件需要修改，总是首先修改在缓存池中的页（发生修改后，该页即为脏页），然后按照一定的频率将缓冲池的脏页刷新到文件。</p>
+<p>缓冲池中缓存的数据页类型有：索引页、数据页、undo页、插入缓冲（insert buffer）、自适应哈希索引（adaptive hash index）、InnoDB存储的锁信息（lock info）、数据字典信息（data dictionary）等。</p>
+<p>日志缓冲将重做日志信息先放入这个缓冲区，然后按一定频率将其刷新到重做日志文件。该值一般不需要设置很大，因为一般情况下每一秒钟就会将重做日志缓冲刷新到日志文件，因此我们只需要保证每秒产生的事务量在这个缓冲大小之内即可。</p>
+<p>额外的内存池：在InnoDB存储引擎中，对内存的管理是通过一种称为内存堆的方式进行的。在对一些数据结构本身分配内存时，需要从额外的内存池中申请，当该区域的内存不够时，会从缓冲池中申请。InnoDB实例会申请缓冲池的空间，但是每个缓冲池中的帧缓冲还有对应的缓冲控制对象，而且这些对象记录了诸如LRU、锁、等待等方面的信息，而这个对象的内存需要从额外内存池中申请。因此，当你申请了很大的InnoDB缓冲池中，这个值也应该相应增加。</p>
+<h4 id="关键特性"><a href="#关键特性" class="headerlink" title="关键特性"></a>关键特性</h4><h5 id="插入缓冲"><a href="#插入缓冲" class="headerlink" title="插入缓冲"></a>插入缓冲</h5><p>对于非聚集索引的插入或更新操作，InnoDB不是每一次直接插入索引页中。而是先判断插入的非聚集索引页是否在缓冲池中。如果在，则直接插入；如果不存在，则先放入一个插入缓冲区中，好似欺骗数据库这个非聚集的索引已经插入到叶子结点了，然后再以一定的频率执行插入缓冲和非聚集索引页子节点的合并操作，这时通常能将多个插入合并到一个操作中（因为在一个索引页中），这就大大提高了对非聚集索引执行插入和修改操作的性能。</p>
+<p>​    插入缓冲的使用需要满足以下两个条件：</p>
+<p>​    索引是辅助索引。</p>
+<p>​    索引不是唯一的。</p>
+<p>索引是辅助索引：InnoDB存储引擎是基于索引的表，聚集索引（主键）既存储了索引值也存储了行值，且聚集索引一般是有顺序的，所以直接插入不会有大的IO操作</p>
+<p>索引不是唯一的：如果索引是唯一，假设允许使用插入缓存，为了其保持唯一性，就得查询真正的索引页来判断是否是真正的唯一，这种查找是离散的，所以还是会有大的IO操作，那么使用插入缓存就得不偿失了。</p>
+<p>在InnoDB 5.5版本，insert buffer还新增了Update、Delete、Purge等操作，insert buffer随之更名为change buffer。</p>
+<h5 id="两次写"><a href="#两次写" class="headerlink" title="两次写"></a>两次写</h5><p>InnoDB存储引擎doublewrite的体系架构图如下： <img src="/2018/04/17/MySQL-InnoDB-杂论/屏幕快照 2018-04-24 下午5.28.19.png" alt="屏幕快照 2018-04-24 下午5.28.19"></p>
+<p>当写入失效发生时，先通过页的副本来还原该页，再进行重做，这就是doublewrite。doublewrite由两个部分组成：一部分是内存中的doublewrite buffer，大小为2MB;另一部分是物理磁盘上共享表空间中连续的128个页，即两个区，大小同样为2MB。当缓冲池的脏页刷新时，并不直接写磁盘，而是会通过memcpy函数将脏页先拷贝到内存中的doublewrite buffer，之后通过doublewrite buffer再分两次，每次写入1MB到共享表空间的物理磁盘上，然后马上调用fsync函数，同步磁盘，避免缓冲写带来的问题。这个过程中，因为doublewrite页是连续的，因此这个过程是顺序写的，开销并不是很大。在完成doublewrite 页的写入后，再将doublewrite buffer中的页写入各个表空间文件中，此时的写入则是离散的。</p>
+<h5 id="自适应哈希索引"><a href="#自适应哈希索引" class="headerlink" title="自适应哈希索引"></a>自适应哈希索引</h5><p>InnoDB存储引擎会监控对表上索引的查找，如果观察到建立哈希索引可以带来速度的提升，则建立哈希索引，所以称之为自适应的。自适应哈希索引通过缓冲池的B+树构造而来，因此建立的速度很快。而且不需要讲整个表都建哈希索引，InnoDB存储引擎会自动根据访问的频率和模式来为某些页建立哈希索引。值得注意的是，哈希索引只能用来搜索等值的查询。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+
+      </div>
+    
+  
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+            <a href="/tags/InnoDB/" rel="tag"># InnoDB</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/12/Paxos算法分析/" rel="next" title="Paxos算法分析">
+                <i class="fa fa-chevron-left"></i> Paxos算法分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <!-- <div class="post-spread">
+      
+    </div> -->
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/headimg.jpeg"
+                alt="刘凯召" />
+            
+              <p class="site-author-name" itemprop="name">刘凯召</p>
+              <p class="site-description motion-element" itemprop="description">态度决定深度</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">27</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">26</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL架构图"><span class="nav-number">2.</span> <span class="nav-text">MySQL架构图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#InnoDB的存储引擎"><span class="nav-number">3.</span> <span class="nav-text">InnoDB的存储引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#体系结构"><span class="nav-number">3.0.1.</span> <span class="nav-text">体系结构</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#后台线程"><span class="nav-number">3.0.1.1.</span> <span class="nav-text">后台线程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#内存"><span class="nav-number">3.0.1.2.</span> <span class="nav-text">内存</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关键特性"><span class="nav-number">3.0.2.</span> <span class="nav-text">关键特性</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#插入缓冲"><span class="nav-number">3.0.2.1.</span> <span class="nav-text">插入缓冲</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#两次写"><span class="nav-number">3.0.2.2.</span> <span class="nav-text">两次写</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#自适应哈希索引"><span class="nav-number">3.0.2.3.</span> <span class="nav-text">自适应哈希索引</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">刘凯召</span>
+
+  
+</div>
+
+
+  <div class="powered-by">
+       <i class="fa fa-user-md"></i>
+       <span id="busuanzi_container_site_uv">本站访客数：<span id="busuanzi_value_site_uv"></span> | 访问量：<span id="busuanzi_value_site_pv"></span></span>
+  </div>  
+
+  <!-- <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div> -->
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+ <!-- <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div> -->
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <script type="text/javascript" src="//cdn.bootcss.com/canvas-nest.js/1.0.0/canvas-nest.min.js"></script>
+  
+</body>
+</html>
