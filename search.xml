@@ -1411,72 +1411,6 @@ void ( *valDestructor) (void *privdata,void *obj);
     </entry>
     
     <entry>
-      <title><![CDATA[分析String源码所得]]></title>
-      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
-      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
-<p>2.String 源码分析</p>
-<p><code>public boolean equals(Object anObject) {</code></p>
-<pre><code>if (this == anObject) {
-</code></pre><a id="more"></a>
-<pre><code>        return true;
-
-    }
-
-    if (anObject instanceof String) {
-
-        String anotherString = (String) anObject;
-
-        int n = value.length;
-
-        if (n == anotherString.value.length) {
-
-            char v1[] = value;
-
-            char v2[] = anotherString.value;
-
-            int i = 0;
-
-            while (n-- != 0) {
-
-                if (v1[i] != v2[i])
-
-                        return false;
-
-                i++;
-
-            }
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-`}`
-</code></pre><p>分析：</p>
-<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[spring aop源码分析]]></title>
       <url>/2017/11/30/2017-11-30--spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>源码分析：</p>
@@ -1793,126 +1727,52 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
     </entry>
     
     <entry>
-      <title><![CDATA[hashMap源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
-<p>hashMap就是数组加链表的存储结构。</p>
-<p>put源码：</p>
-<p><code>public V put(K key, V value) {</code></p>
-<pre><code>if (table == EMPTY_TABLE) {
+      <title><![CDATA[分析String源码所得]]></title>
+      <url>/2017/11/30/2017-11-30--%E5%88%86%E6%9E%90String%E6%BA%90%E7%A0%81%E6%89%80%E5%BE%97/</url>
+      <content type="html"><![CDATA[<p>1.String 中没有对+进行重载，java中没有对运算符重载，String的+的操作是在编译的时候new StringBuilder,在调用append方法来进行+操作的。</p>
+<p>2.String 源码分析</p>
+<p><code>public boolean equals(Object anObject) {</code></p>
+<pre><code>if (this == anObject) {
 </code></pre><a id="more"></a>
-<pre><code>        inflateTable(threshold);
+<pre><code>        return true;
 
     }
 
-    if (key == null)
+    if (anObject instanceof String) {
 
-        return putForNullKey(value);
+        String anotherString = (String) anObject;
 
-    int hash = hash(key);
+        int n = value.length;
 
-    int i = indexFor(hash, table.length);
+        if (n == anotherString.value.length) {
 
-    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
+            char v1[] = value;
 
-        Object k;
+            char v2[] = anotherString.value;
 
-        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
+            int i = 0;
 
-            V oldValue = e.value;
+            while (n-- != 0) {
 
-            e.value = value;
+                if (v1[i] != v2[i])
 
-            e.recordAccess(this);
+                        return false;
 
-            return oldValue;
-
-        }
-
-    }
-
-    modCount++;
-
-    addEntry(hash, key, value, i);
-
-    return null;
-
-`}`
-</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
-<pre><code>`final int hash(Object k) {`
-
-    int h = hashSeed;
-
-    if (0 != h &amp;&amp; k instanceof String) {
-
-        return sun.misc.Hashing.stringHash32((String) k);
-
-    }
-
-    h ^= k.hashCode();
-
-    // This function ensures that hashCodes that differ only by
-
-    // constant multiples at each bit position have a bounded
-
-    // number of collisions (approximately 8 at default load factor).
-
-    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
-
-    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
-
-`}`
-</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
-<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
-
-    int newCapacity = newTable.length;
-
-    for (Entry&lt;K,V&gt; e : table) {
-
-        while(null != e) {
-
-            Entry&lt;K,V&gt; next = e.next;
-
-            if (rehash) {
-
-                e.hash = null == e.key ? 0 : hash(e.key);
+                i++;
 
             }
 
-            int i = indexFor(e.hash, newCapacity);
-
-            e.next = newTable[i];
-
-            newTable[i] = e;
-
-            e = next;
+            return true;
 
         }
 
     }
 
+    return false;
+
 `}`
-</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
-<p>以上中的Entry的结构是：</p>
-<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
-<pre><code>final K key;
-
-V value;
-
-Entry&lt;K,V&gt; next;
-
-int hash;
-</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
-<pre><code>    value = v;
-
-    next = n;
-
-    key = k;
-
-    hash = h;
-
-}
-</code></pre><p><code>}</code></p>
+</code></pre><p>分析：</p>
+<p>String 的 equals 包含了 “==“ ，双等号比较的是地址，地址相同，内容肯定相同，当地址不相同的时候，比较的是两个字符串中的每一个字符，完全相同则表示相等，返回true，否则返回false。</p>
 ]]></content>
       
         <categories>
@@ -1924,9 +1784,9 @@ int hash;
         
         <tags>
             
-            <tag> 源码 </tag>
+            <tag> java </tag>
             
-            <tag> hashMap </tag>
+            <tag> 源码 </tag>
             
         </tags>
         
@@ -2319,6 +2179,146 @@ return clone;
             <tag> java </tag>
             
             <tag> 源码 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[hashMap源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--hashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>java基本存储结构：数组和链表</p>
+<p>hashMap就是数组加链表的存储结构。</p>
+<p>put源码：</p>
+<p><code>public V put(K key, V value) {</code></p>
+<pre><code>if (table == EMPTY_TABLE) {
+</code></pre><a id="more"></a>
+<pre><code>        inflateTable(threshold);
+
+    }
+
+    if (key == null)
+
+        return putForNullKey(value);
+
+    int hash = hash(key);
+
+    int i = indexFor(hash, table.length);
+
+    for (Entry&lt;K,V&gt; e = table[i]; e != null; e = e.next) {
+
+        Object k;
+
+        if (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) {
+
+            V oldValue = e.value;
+
+            e.value = value;
+
+            e.recordAccess(this);
+
+            return oldValue;
+
+        }
+
+    }
+
+    modCount++;
+
+    addEntry(hash, key, value, i);
+
+    return null;
+
+`}`
+</code></pre><p>根据每个key进行hash,hash的源码如下：</p>
+<pre><code>`final int hash(Object k) {`
+
+    int h = hashSeed;
+
+    if (0 != h &amp;&amp; k instanceof String) {
+
+        return sun.misc.Hashing.stringHash32((String) k);
+
+    }
+
+    h ^= k.hashCode();
+
+    // This function ensures that hashCodes that differ only by
+
+    // constant multiples at each bit position have a bounded
+
+    // number of collisions (approximately 8 at default load factor).
+
+    h ^= (h &gt;&gt;&gt; 20) ^ (h &gt;&gt;&gt; 12);
+
+    return h ^ (h &gt;&gt;&gt; 7) ^ (h &gt;&gt;&gt; 4);
+
+`}`
+</code></pre><p>hash的作用就是把每个put进来的值，通过移位与运算，来实现分布均匀，最好的情况就是hashmap数组中每一个位置都有一个值。每次put进去的时候，hashMap的size加1,当size大于容量，通过resize 函数来使hashmap的大小扩容为原来的两倍，内部实现就是再创建一个新的数组，然后通过tranfer来把元素拷贝过去。tranfer的源码如下：</p>
+<pre><code>`void transfer(Entry[] newTable, boolean rehash) {`
+
+    int newCapacity = newTable.length;
+
+    for (Entry&lt;K,V&gt; e : table) {
+
+        while(null != e) {
+
+            Entry&lt;K,V&gt; next = e.next;
+
+            if (rehash) {
+
+                e.hash = null == e.key ? 0 : hash(e.key);
+
+            }
+
+            int i = indexFor(e.hash, newCapacity);
+
+            e.next = newTable[i];
+
+            newTable[i] = e;
+
+            e = next;
+
+        }
+
+    }
+
+`}`
+</code></pre><p>分析：循环原table,当某个[i]的位置上有两个或以上元素时，循环链表，注意这里是将后循环到的元素插到了链表的头部，另外因为时重新hash值，所以某些元素的位置会发生变化。</p>
+<p>以上中的Entry的结构是：</p>
+<p><code>static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {</code></p>
+<pre><code>final K key;
+
+V value;
+
+Entry&lt;K,V&gt; next;
+
+int hash;
+</code></pre><p><code>Entry(int h, K k, V v, Entry&lt;K,V&gt; n) {</code></p>
+<pre><code>    value = v;
+
+    next = n;
+
+    key = k;
+
+    hash = h;
+
+}
+</code></pre><p><code>}</code></p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 源码 </tag>
+            
+            <tag> hashMap </tag>
             
         </tags>
         
