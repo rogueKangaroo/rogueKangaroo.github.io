@@ -3,6 +3,35 @@
   
     
     <entry>
+      <title><![CDATA[java类和对象的初始化顺序]]></title>
+      <url>/2018/08/10/java%E7%B1%BB%E5%92%8C%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%BA%E5%BA%8F/</url>
+      <content type="html"><![CDATA[<h2 id="1-程序事例"><a href="#1-程序事例" class="headerlink" title="1.程序事例"></a>1.程序事例</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Test</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        System.out.println(str);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Base</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> Test baseStatic = <span class="keyword">new</span> Test(<span class="string">"base static"</span>);</span><br><span class="line">    <span class="keyword">public</span> Test base = <span class="keyword">new</span> Test(<span class="string">"base no static"</span>);</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Base</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Base create"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ImplA</span> <span class="keyword">extends</span> <span class="title">Base</span></span>&#123;</span><br><span class="line">    <span class="keyword">static</span> Test implAStatic = <span class="keyword">new</span> Test(<span class="string">"ImplA static"</span>);</span><br><span class="line">    <span class="keyword">public</span> Test implA = <span class="keyword">new</span> Test(<span class="string">"ImplA no static"</span>);</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ImplA</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"ImplA create"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ImplB</span> <span class="keyword">extends</span> <span class="title">Base</span></span>&#123;</span><br><span class="line">    <span class="keyword">static</span> Test implBStatic = <span class="keyword">new</span> Test(<span class="string">"ImplB static"</span>);</span><br><span class="line">    <span class="keyword">public</span> Test implB = <span class="keyword">new</span> Test(<span class="string">"ImplB no static"</span>);</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ImplB</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"ImplB create"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ImplA implA = <span class="keyword">new</span> ImplA();</span><br><span class="line">        ImplB implB = <span class="keyword">new</span> ImplB();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="2-运行结果"><a href="#2-运行结果" class="headerlink" title="2.运行结果"></a>2.运行结果</h2><h3 id="运行ImplB的main方法："><a href="#运行ImplB的main方法：" class="headerlink" title="运行ImplB的main方法："></a>运行ImplB的main方法：</h3><p>base static<br>ImplB static<br>ImplA static<br>base no static<br>Base create<br>ImplA no static<br>ImplA create<br>base no static<br>Base create<br>ImplB no static<br>ImplB create</p>
+<h3 id="3-结果分析"><a href="#3-结果分析" class="headerlink" title="3.结果分析"></a>3.结果分析</h3><p>1.先加载main方法所在的类</p>
+<p>2.加载父类</p>
+<p>3.从父类到子类初始化static成员，子类中先加载的类，先初始化static</p>
+<p>4.从父类到子类初始化成员变量、构造方法</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 类加载 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[MySQL InnoDB 存储引擎]]></title>
       <url>/2018/04/17/MySQL-InnoDB-%E6%9D%82%E8%AE%BA/</url>
       <content type="html"><![CDATA[<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>这篇博客是在看《MySQL技术内幕：InnoDB存储引擎》这本书的过程中，随手记一些觉得有用的知识点，后续有时间会在详细整理一个系列。</p>
@@ -1793,169 +1822,6 @@ public Object intercept(Object o, Method method, Object[] objects, MethodProxy m
     </entry>
     
     <entry>
-      <title><![CDATA[ArrayList源码分析]]></title>
-      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
-      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
-<p><code>ArrayList 的add源码为：</code></p>
-<pre><code>public boolean add(E e){
-
-     ensureCapacityInternal(size +1);
-
-     elementData[size++]==e;
-</code></pre><a id="more"></a>
-<pre><code>     return true;
-
-}
-</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
-<p>其中的ensureCapacityInternal函数的源码为：</p>
-<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
-<pre><code>if(elementData == EMPTY_ELEMENTDATA){
-
-     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
-
-}
-
-ensureExplicitCapacity(minCapacity);
-</code></pre><p><code>}</code></p>
-<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
-<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
-
-     modCount++;
-
-     if(minCapacity - elementData.length&gt;0){
-
-          grow(minCapacity);
-
-     }
-
-}
-</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
-<p>grow()的源码为：</p>
-<p><code>private void grow(int minCapacity){</code></p>
-<pre><code>int oldCapacity = elementData.length;
-
-int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
-
-if(newCapacity - minCapacity&lt;0)
-
-     newCapacity=minCapacity;
-
-if(newCapacity-MAX_ARRAY_SIZE&gt;0)
-
-     newCapacity = hugeCapacity(minCapacity);
-
- elementData = Arrays.copyof(element,newCapacity);
-</code></pre><p><code>}</code></p>
-<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
-<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
-<p><code>public E remove(int index){</code></p>
-<pre><code>rangeCheck(index);
-
-modCount++;
-
-E oldValue=elementData(index);
-
-int numMoved = size -index -1;
-
-if(numMoved&gt;0){
-
-     System.arraycopy(elementData,index+1,elementData,index,numMoved);
-
-}
-
-elementData[--size]=null;
-
-return oldValue;
-</code></pre><p> <code>}</code></p>
-<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
-<p>我们再看get的源码:</p>
-<p><code>public E get(int index){</code></p>
-<pre><code>rangeCheck(index);
-
-checkForComodification();
-
-return ArrayList.this.elementData(offset+index);
-</code></pre><p><code>}</code></p>
-<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
-<p><code>public E set(int index,E e){</code></p>
-<pre><code>rangeCheck(index);
-
-checkForComodification();
-
-E oldValue = Array.this.elementData(offset + index);
-
-ArrayList.this.elementData[offset +index]=e;
-
-return oldValue;
-</code></pre><p><code>}</code></p>
-<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
-<p>contains的源码为：</p>
-<p><code>public boolean contains(Object o){</code></p>
-<pre><code>return indexOf(o)&gt;=0;
-</code></pre><p><code>}</code></p>
-<p><code>public int indexOf(Object o){</code></p>
-<pre><code>if(o==null){
-
-     for(int i=0;i&lt;size;i++){
-
-          if(elementData[i]==null)
-
-               return i;
-
-     }
-
-}else {
-
-     for(int i=0;i&lt;size;i++){
-
-          if(o.equals(elementData[i))
-
-               return i;
-
-     }
-
-}
-
-return -1;
-</code></pre><p><code>}</code></p>
-<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
-<p>还有clone的源码：</p>
-<p><code>public Object clone(){</code></p>
-<pre><code>try{
-
-     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
-
-     v.elementData = Arrays.copyof(elementData,size);
-
-     v.modCount = 0;
-
-}catch(CloneNotSupportedException e){
-
-     throw new InternalError();
-
-}
-</code></pre><p><code>}</code></p>
-<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 源码 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> java </tag>
-            
-            <tag> 源码 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[LinkedList源码分析]]></title>
       <url>/2017/11/30/2017-11-30--LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<p>LinkedList的基本存储结构是链表</p>
@@ -2319,6 +2185,169 @@ int hash;
             <tag> 源码 </tag>
             
             <tag> hashMap </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[ArrayList源码分析]]></title>
+      <url>/2017/11/30/2017-11-30--ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>ArrayList的基本存储数据结构为数组</p>
+<p><code>ArrayList 的add源码为：</code></p>
+<pre><code>public boolean add(E e){
+
+     ensureCapacityInternal(size +1);
+
+     elementData[size++]==e;
+</code></pre><a id="more"></a>
+<pre><code>     return true;
+
+}
+</code></pre><p>``在当前存储结构足够存储的时候，就直接把数组的size+1项的元素设为e即可。</p>
+<p>其中的ensureCapacityInternal函数的源码为：</p>
+<p><code>private void ensureCapacityInternal(int minCapacity){</code></p>
+<pre><code>if(elementData == EMPTY_ELEMENTDATA){
+
+     minCapacity = Math.max(DEFAULT_CAPACITY,minCapacity);
+
+}
+
+ensureExplicitCapacity(minCapacity);
+</code></pre><p><code>}</code></p>
+<p>``其中DEFULT_CAPACITY为10，即当你初始化ArrayList的时候最小初始大小为10，ensureExplicitCapacity函数的源码为：</p>
+<pre><code>`private void ensureExplicitCapacity(int minCapacity){`
+
+     modCount++;
+
+     if(minCapacity - elementData.length&gt;0){
+
+          grow(minCapacity);
+
+     }
+
+}
+</code></pre><p>``这里判断了当前需要的size即minCapacity是否大于element的长度，若供小于需，则需要扩容。</p>
+<p>grow()的源码为：</p>
+<p><code>private void grow(int minCapacity){</code></p>
+<pre><code>int oldCapacity = elementData.length;
+
+int newCapacity = oldCapacity+(oldCapacity&gt;&gt;1);
+
+if(newCapacity - minCapacity&lt;0)
+
+     newCapacity=minCapacity;
+
+if(newCapacity-MAX_ARRAY_SIZE&gt;0)
+
+     newCapacity = hugeCapacity(minCapacity);
+
+ elementData = Arrays.copyof(element,newCapacity);
+</code></pre><p><code>}</code></p>
+<p>这里就是先确定扩容后的ArrayList数组的大小，然后在调用coryof，拷贝到新的数组中后赋给elementData。从这段源码可以知道ArrayList的存储数量是有限的，通过hugeCapacity函数得知为Integer的MAX_VALUE，想想也是，当存储超过Integer的最大值时，数组的下标无法表示的啊。</p>
+<p>以上讲完ArrayList的add函数后，我们看看remove的源码：</p>
+<p><code>public E remove(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+modCount++;
+
+E oldValue=elementData(index);
+
+int numMoved = size -index -1;
+
+if(numMoved&gt;0){
+
+     System.arraycopy(elementData,index+1,elementData,index,numMoved);
+
+}
+
+elementData[--size]=null;
+
+return oldValue;
+</code></pre><p> <code>}</code></p>
+<p>从以上源码可以得知，当删除元素时是非常耗时的，他会把要删除的元素的后面所有元素都向前复制（移动）一位，然后ArrayList的size-1,之前位置的value置为null,方便GC回收。</p>
+<p>我们再看get的源码:</p>
+<p><code>public E get(int index){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+return ArrayList.this.elementData(offset+index);
+</code></pre><p><code>}</code></p>
+<p>就是检查的下标是否越界，然后拿出来从初始存储位置加上index的元素值。</p>
+<p><code>public E set(int index,E e){</code></p>
+<pre><code>rangeCheck(index);
+
+checkForComodification();
+
+E oldValue = Array.this.elementData(offset + index);
+
+ArrayList.this.elementData[offset +index]=e;
+
+return oldValue;
+</code></pre><p><code>}</code></p>
+<p>这段源码比较容易理解，也是先检查了是否数组越界。</p>
+<p>contains的源码为：</p>
+<p><code>public boolean contains(Object o){</code></p>
+<pre><code>return indexOf(o)&gt;=0;
+</code></pre><p><code>}</code></p>
+<p><code>public int indexOf(Object o){</code></p>
+<pre><code>if(o==null){
+
+     for(int i=0;i&lt;size;i++){
+
+          if(elementData[i]==null)
+
+               return i;
+
+     }
+
+}else {
+
+     for(int i=0;i&lt;size;i++){
+
+          if(o.equals(elementData[i))
+
+               return i;
+
+     }
+
+}
+
+return -1;
+</code></pre><p><code>}</code></p>
+<p>通过以上源码得知，检查是否包含某元素的方式就是遍历所有元素，效率不高。indexOf返回的是第一个等于该值的下标，还有lastIndexOf返回的是最后一个等于该值的下标。</p>
+<p>还有clone的源码：</p>
+<p><code>public Object clone(){</code></p>
+<pre><code>try{
+
+     ArrayList&lt;E&gt; v = (ArrayList&lt;E&gt;) supper.clone();
+
+     v.elementData = Arrays.copyof(elementData,size);
+
+     v.modCount = 0;
+
+}catch(CloneNotSupportedException e){
+
+     throw new InternalError();
+
+}
+</code></pre><p><code>}</code></p>
+<p>由此可见ArrayList的clone的克隆只是简单的克隆一下指向，并不会把所有的值再复制一份。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> java </tag>
+            
+            <tag> 源码 </tag>
             
         </tags>
         

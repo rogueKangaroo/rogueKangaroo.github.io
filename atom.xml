@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-04-24T09:50:39.000Z</updated>
+  <updated>2018-08-10T08:37:57.669Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>java类和对象的初始化顺序</title>
+    <link href="http://yoursite.com/2018/08/10/java%E7%B1%BB%E5%92%8C%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%BA%E5%BA%8F/"/>
+    <id>http://yoursite.com/2018/08/10/java类和对象的初始化顺序/</id>
+    <published>2018-08-10T08:34:35.000Z</published>
+    <updated>2018-08-10T08:37:57.669Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="1-程序事例"><a href="#1-程序事例" class="headerlink" title="1.程序事例"></a>1.程序事例</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Test</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        System.out.println(str);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Base</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> Test baseStatic = <span class="keyword">new</span> Test(<span class="string">"base static"</span>);</span><br><span class="line">    <span class="keyword">public</span> Test base = <span class="keyword">new</span> Test(<span class="string">"base no static"</span>);</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Base</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Base create"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ImplA</span> <span class="keyword">extends</span> <span class="title">Base</span></span>&#123;</span><br><span class="line">    <span class="keyword">static</span> Test implAStatic = <span class="keyword">new</span> Test(<span class="string">"ImplA static"</span>);</span><br><span class="line">    <span class="keyword">public</span> Test implA = <span class="keyword">new</span> Test(<span class="string">"ImplA no static"</span>);</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ImplA</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"ImplA create"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ImplB</span> <span class="keyword">extends</span> <span class="title">Base</span></span>&#123;</span><br><span class="line">    <span class="keyword">static</span> Test implBStatic = <span class="keyword">new</span> Test(<span class="string">"ImplB static"</span>);</span><br><span class="line">    <span class="keyword">public</span> Test implB = <span class="keyword">new</span> Test(<span class="string">"ImplB no static"</span>);</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ImplB</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"ImplB create"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ImplA implA = <span class="keyword">new</span> ImplA();</span><br><span class="line">        ImplB implB = <span class="keyword">new</span> ImplB();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h2 id="2-运行结果"><a href="#2-运行结果" class="headerlink" title="2.运行结果"></a>2.运行结果</h2><h3 id="运行ImplB的main方法："><a href="#运行ImplB的main方法：" class="headerlink" title="运行ImplB的main方法："></a>运行ImplB的main方法：</h3><p>base static<br>ImplB static<br>ImplA static<br>base no static<br>Base create<br>ImplA no static<br>ImplA create<br>base no static<br>Base create<br>ImplB no static<br>ImplB create</p><h3 id="3-结果分析"><a href="#3-结果分析" class="headerlink" title="3.结果分析"></a>3.结果分析</h3><p>1.先加载main方法所在的类</p><p>2.加载父类</p><p>3.从父类到子类初始化static成员，子类中先加载的类，先初始化static</p><p>4.从父类到子类初始化成员变量、构造方法</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;1-程序事例&quot;&gt;&lt;a href=&quot;#1-程序事例&quot; class=&quot;headerlink&quot; title=&quot;1.程序事例&quot;&gt;&lt;/a&gt;1.程序事例&lt;/h2&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutt
+      
+    
+    </summary>
+    
+      <category term="类加载" scheme="http://yoursite.com/categories/%E7%B1%BB%E5%8A%A0%E8%BD%BD/"/>
+    
+    
+      <category term="java" scheme="http://yoursite.com/tags/java/"/>
+    
+  </entry>
   
   <entry>
     <title>MySQL InnoDB 存储引擎</title>
@@ -498,28 +523,6 @@
       <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
     
       <category term="调优" scheme="http://yoursite.com/tags/%E8%B0%83%E4%BC%98/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>JVM内存模型</title>
-    <link href="http://yoursite.com/2017/11/30/2017-11-30--JVM%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"/>
-    <id>http://yoursite.com/2017/11/30/2017-11-30--JVM内存模型/</id>
-    <published>2017-11-30T03:50:00.000Z</published>
-    <updated>2017-11-30T03:55:22.000Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="程序计数器（线程私有的）"><a href="#程序计数器（线程私有的）" class="headerlink" title="程序计数器（线程私有的）"></a>程序计数器（线程私有的）</h3><p>程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p><a id="more"></a><p>由于Java 虚拟机的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，在任何一个确定的时刻，一个处理器（对于多核处理器来说是一个内核）只会执行一条线程中的指令。因此，为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各条线程之间的计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。</p><h3 id="虚拟机栈（线程私有的）"><a href="#虚拟机栈（线程私有的）" class="headerlink" title="虚拟机栈（线程私有的）"></a>虚拟机栈（线程私有的）</h3><p>虚拟机栈描述的是Java 方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。</p><p>动画是由一帧一帧图片连续切换结果的结果而产生的，其实虚拟机的运行和动画也类似，每个在虚拟机中运行的程序也是由许多的帧的切换产生的结果，只是这些帧里面存放的是方法的局部变量，操作数栈，动态链接，方法返回地址和一些额外的附加信息组成。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p><p>对于执行引擎来说，活动线程中，只有栈顶的栈帧是有效的，称为当前栈帧，这个栈帧所关联的方法称为当前方法。执行引擎所运行的所有字节码指令都只针对当前栈帧进行操作。</p><h3 id="java堆（线程共享的，生命周期与虚拟机相同）"><a href="#java堆（线程共享的，生命周期与虚拟机相同）" class="headerlink" title="java堆（线程共享的，生命周期与虚拟机相同）"></a>java堆（线程共享的，生命周期与虚拟机相同）</h3><p>保存对象实例，所有对象实例（包括数组）都要在堆上分配</p><h3 id="方法区（线程共享）"><a href="#方法区（线程共享）" class="headerlink" title="方法区（线程共享）"></a>方法区（线程共享）</h3><p>存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据</p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;h3 id=&quot;程序计数器（线程私有的）&quot;&gt;&lt;a href=&quot;#程序计数器（线程私有的）&quot; class=&quot;headerlink&quot; title=&quot;程序计数器（线程私有的）&quot;&gt;&lt;/a&gt;程序计数器（线程私有的）&lt;/h3&gt;&lt;p&gt;程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。&lt;/p&gt;
-    
-    </summary>
-    
-      <category term="JVM" scheme="http://yoursite.com/categories/JVM/"/>
-    
-    
-      <category term="JVM" scheme="http://yoursite.com/tags/JVM/"/>
     
   </entry>
   
